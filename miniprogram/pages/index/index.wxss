@@ -1,0 +1,98 @@
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+}
+
+.tool-item {
+  background-color: #f8f9fa;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  text-align: center;
+}
+
+.tool-icon {
+  font-size: 48rpx;
+  margin-bottom: 16rpx;
+}
+
+.tool-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.tool-desc {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-info {
+  flex: 1;
+}
+
+.recent-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.recent-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.recent-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  margin-left: 20rpx;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.file-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.file-download {
+  color: #0082FF;
+  font-size: 28rpx;
+}

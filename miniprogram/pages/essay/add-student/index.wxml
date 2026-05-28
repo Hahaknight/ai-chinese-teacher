@@ -1,0 +1,31 @@
+<view class="container">
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">学生姓名</view>
+      <input class="form-input" placeholder="请输入学生姓名" value="{{studentName}}" bindinput="onNameInput" />
+    </view>
+
+    <!-- 图片上传区域 -->
+    <view class="form-group">
+      <view class="form-label">作文图片（1-3张）</view>
+
+      <view class="image-list">
+        <view class="image-item" wx:for="{{images}}" wx:key="index">
+          <image src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}" />
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+          <view class="page-tag">第{{index + 1}}页</view>
+        </view>
+
+        <view class="add-image-btn" wx:if="{{images.length < 3}}" bindtap="chooseImage">
+          <view class="add-icon">+</view>
+          <view class="add-text">上传第{{images.length + 1}}页</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="btn-wrapper">
+      <button class="btn-default" bindtap="saveAndContinue">保存并继续</button>
+      <button class="btn-primary" bindtap="saveAndAddNext">保存并新增下一位</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  openId        String   @unique
+  unionId       String?  @unique
+  nickname      String?
+  avatarUrl     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  batches         EssayBatch[]
+  essayTasks      EssayTask[]
+  sentenceFixes   SentenceFixRecord[]
+  favorites       MaterialFavorite[]
+  lectureReviews  LectureReview[]
+  generatedFiles  GeneratedFile[]
+}
+
+model EssayBatch {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  batchName         String
+  reviewRequirement String
+  status            String   @default("pending") // pending | processing | completed | partial | failed
+  totalCount        Int      @default(0)
+  successCount      Int      @default(0)
+  failedCount       Int      @default(0)
+  processingCount   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tasks          EssayTask[]
+  lectureReviews LectureReview[]
+}
+
+model EssayTask {
+  id               String   @id @default(uuid())
+  batchId          String
+  batch            EssayBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  studentName      String
+  imageUrls        String   // JSON array
+  imageCount       Int      @default(0)
+  status           String   @default("pending") // pending | processing | success | failed
+  score            Int?
+  fullScore        Int?
+  recognizedText   String?
+  reviewResultJson String?  // JSON
+  shortComment     String?
+  wordUrl          String?
+  pdfUrl           String?
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model SentenceFixRecord {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  originalSentence String
+  problemAnalysis  String
+  fixedSentence    String
+  explanation      String
+  similarExample   String
+  resultJson       String   // JSON
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model WritingMaterial {
+  id              String   @id @default(uuid())
+  title           String
+  category        String   // 成长 | 坚持 | 亲情 | 挫折 | 自信 | 时间 | 理想 | 观察生活
+  tags            String   // JSON array
+  coreFeature     String
+  symbolicMeaning String
+  suitableThemes  String
+  usageAngle      String
+  sampleParagraph String
+  suitableTopics  String   // JSON array
+  warning         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  favorites MaterialFavorite[]
+}
+
+model MaterialFavorite {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  materialId String
+  material   WritingMaterial @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, materialId])
+}
+
+model LectureReview {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  batchId   String
+  batch     EssayBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  title     String
+  content   String   // JSON
+  wordUrl   String?
+  pdfUrl    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GeneratedFile {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  sourceType String   // essay_report | lecture_review | batch_zip
+  sourceId   String
+  fileName   String
+  fileType   String   // docx | pdf | zip
+  fileUrl    String
+  fileSize   Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

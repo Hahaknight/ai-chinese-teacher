@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="material-list" wx:if="{{materials.length > 0}}">
+    <view class="material-item" wx:for="{{materials}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="material-title">{{item.title}}</view>
+      <view class="material-tags">
+        <text class="tag" wx:for="{{item.tags}}" wx:key="index" wx:for-item="tag">{{tag}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text>暂无收藏素材</text>
+  </view>
+</view>

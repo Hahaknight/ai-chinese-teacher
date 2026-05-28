@@ -1,0 +1,63 @@
+.filter-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 30rpx;
+}
+
+.filter-item {
+  padding: 12rpx 24rpx;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.filter-item.active {
+  background-color: #0082FF;
+  color: #fff;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.file-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.file-meta {
+  display: flex;
+  gap: 16rpx;
+}
+
+.file-size, .file-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.file-download {
+  color: #0082FF;
+  font-size: 28rpx;
+}

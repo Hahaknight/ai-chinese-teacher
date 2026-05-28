@@ -1,0 +1,92 @@
+<view class="container">
+  <!-- 讲评课标题 -->
+  <view class="lecture-header card">
+    <view class="lecture-title">{{lecture.title}}</view>
+  </view>
+
+  <!-- 整体情况 -->
+  <view class="card">
+    <view class="section-title">一、本次作文整体情况</view>
+    <view class="section-content">{{lecture.content.overallSituation}}</view>
+  </view>
+
+  <!-- 主要优点 -->
+  <view class="card">
+    <view class="section-title">二、本次作文主要优点</view>
+    <view class="list-item" wx:for="{{lecture.content.mainStrengths}}" wx:key="index">
+      <text class="bullet">•</text>
+      <text class="text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 共性问题 -->
+  <view class="card">
+    <view class="section-title">三、本次作文共性问题</view>
+    <view class="list-item" wx:for="{{lecture.content.commonProblems}}" wx:key="index">
+      <text class="bullet">•</text>
+      <text class="text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 典型问题讲解 -->
+  <view class="card">
+    <view class="section-title">四、典型问题讲解</view>
+    <view class="problem-block" wx:for="{{lecture.content.typicalProblemExplanation}}" wx:key="index">
+      <view class="problem-item">
+        <text class="problem-label">问题：</text>
+        <text class="problem-text">{{item.problem}}</text>
+      </view>
+      <view class="problem-item">
+        <text class="problem-label">原因：</text>
+        <text class="problem-text">{{item.reason}}</text>
+      </view>
+      <view class="problem-item">
+        <text class="problem-label">方法：</text>
+        <text class="problem-text">{{item.method}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 优秀表达赏析 -->
+  <view class="card">
+    <view class="section-title">五、优秀表达赏析</view>
+    <view class="expression-block" wx:for="{{lecture.content.excellentExpressions}}" wx:key="index">
+      <text class="expression-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 课堂修改练习 -->
+  <view class="card">
+    <view class="section-title">六、课堂修改练习</view>
+    <view class="practice-block" wx:for="{{lecture.content.classPractice}}" wx:key="index">
+      <view class="practice-item">
+        <text class="practice-label">练习：</text>
+        <text class="practice-text">{{item.exercise}}</text>
+      </view>
+      <view class="practice-item">
+        <text class="practice-label">引导：</text>
+        <text class="practice-text">{{item.guide}}</text>
+      </view>
+      <view class="practice-item answer">
+        <text class="practice-label">参考答案：</text>
+        <text class="practice-text">{{item.answer}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 课后提升建议 -->
+  <view class="card">
+    <view class="section-title">七、课后提升建议</view>
+    <view class="list-item" wx:for="{{lecture.content.afterClassSuggestions}}" wx:key="index">
+      <text class="bullet">•</text>
+      <text class="text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-default" bindtap="copyAll">复制全文</button>
+    <button class="btn-primary" bindtap="exportWord" wx:if="{{lecture.wordUrl}}">导出 Word</button>
+    <button class="btn-primary" bindtap="exportPDF" wx:if="{{lecture.pdfUrl}}">导出 PDF</button>
+  </view>
+</view>

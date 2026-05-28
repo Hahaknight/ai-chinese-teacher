@@ -1,0 +1,32 @@
+<view class="container">
+  <view class="card">
+    <view class="section-title">选择作文批改批次</view>
+
+    <view wx:if="{{batches.length > 0}}">
+      <view class="batch-item" wx:for="{{batches}}" wx:key="id" bindtap="selectBatch" data-id="{{item.id}}">
+        <view class="batch-info">
+          <view class="batch-name">{{item.batchName}}</view>
+          <view class="batch-meta">{{item.studentCount}} 名学生 · {{item.statusText}}</view>
+        </view>
+        <view class="batch-arrow">›</view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      暂无已完成批改的批次
+    </view>
+  </view>
+
+  <!-- 已生成的讲评课 -->
+  <view class="card" wx:if="{{lectures.length > 0}}">
+    <view class="section-title">已生成的讲评课</view>
+
+    <view class="lecture-item" wx:for="{{lectures}}" wx:key="id" bindtap="goToLecture" data-id="{{item.id}}">
+      <view class="lecture-info">
+        <view class="lecture-title">{{item.title}}</view>
+        <view class="lecture-time">{{item.createdAt}}</view>
+      </view>
+      <view class="lecture-arrow">›</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,43 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/mine/index",
+    "pages/essay/new-batch/index",
+    "pages/essay/batch-detail/index",
+    "pages/essay/add-student/index",
+    "pages/essay/task-log/index",
+    "pages/essay/report/index",
+    "pages/sentence/index/index",
+    "pages/sentence/history/index",
+    "pages/material/index/index",
+    "pages/material/detail/index",
+    "pages/material/favorites/index",
+    "pages/lecture/index/index",
+    "pages/lecture/detail/index",
+    "pages/files/index"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "AI语文教学助手",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#0082FF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {},
+  "sitemapLocation": "sitemap.json"
+}

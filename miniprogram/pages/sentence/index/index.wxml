@@ -1,0 +1,42 @@
+<view class="container">
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">请输入需要修改的句子</view>
+      <textarea class="form-textarea" placeholder="例如：我今天非常特别开心，因为妈妈给我买了一个礼物。" value="{{sentence}}" bindinput="onSentenceInput" />
+    </view>
+
+    <view class="btn-wrapper">
+      <button class="btn-primary" bindtap="fixSentence" loading="{{loading}}">开始检查</button>
+    </view>
+  </view>
+
+  <!-- 结果展示 -->
+  <view class="card result-card" wx:if="{{result}}">
+    <view class="result-section">
+      <view class="result-label">原句</view>
+      <view class="result-content original">{{result.originalSentence}}</view>
+    </view>
+
+    <view class="result-section">
+      <view class="result-label">问题分析</view>
+      <view class="result-content">{{result.problemAnalysis}}</view>
+    </view>
+
+    <view class="result-section">
+      <view class="result-label">修改版本</view>
+      <view class="result-content fixed">{{result.fixedSentence}}</view>
+    </view>
+
+    <view class="result-section">
+      <view class="result-label">讲解说明</view>
+      <view class="result-content">{{result.explanation}}</view>
+    </view>
+
+    <view class="result-section">
+      <view class="result-label">同类示例</view>
+      <view class="result-content example">{{result.similarExample}}</view>
+    </view>
+
+    <button class="btn-copy" bindtap="copyResult">一键复制结果</button>
+  </view>
+</view>

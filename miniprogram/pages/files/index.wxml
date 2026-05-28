@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="filter-tabs">
+    <view class="filter-item {{filterType === 'all' ? 'active' : ''}}" bindtap="setFilter" data-type="all">全部</view>
+    <view class="filter-item {{filterType === 'docx' ? 'active' : ''}}" bindtap="setFilter" data-type="docx">Word</view>
+    <view class="filter-item {{filterType === 'pdf' ? 'active' : ''}}" bindtap="setFilter" data-type="pdf">PDF</view>
+  </view>
+
+  <view class="file-list" wx:if="{{files.length > 0}}">
+    <view class="file-item" wx:for="{{files}}" wx:key="id" bindtap="openFile" data-url="{{item.fileUrl}}">
+      <view class="file-icon">{{item.fileType === 'docx' ? '📄' : '📑'}}</view>
+      <view class="file-info">
+        <view class="file-name">{{item.fileName}}</view>
+        <view class="file-meta">
+          <text class="file-size">{{item.fileSize || '未知大小'}}</text>
+          <text class="file-time">{{item.createdAt}}</text>
+        </view>
+      </view>
+      <view class="file-download">打开</view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text>暂无文件</text>
+  </view>
+</view>

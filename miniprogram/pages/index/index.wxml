@@ -1,0 +1,63 @@
+<view class="container">
+  <!-- 工具入口 -->
+  <view class="card">
+    <view class="card-title">工具入口</view>
+    <view class="tools-grid">
+      <view class="tool-item" bindtap="goToEssayCorrection">
+        <view class="tool-icon">📝</view>
+        <view class="tool-name">作文批改</view>
+        <view class="tool-desc">AI 智能批改作文</view>
+      </view>
+      <view class="tool-item" bindtap="goToSentenceFix">
+        <view class="tool-icon">✏️</view>
+        <view class="tool-name">病句修改</view>
+        <view class="tool-desc">快速修改病句</view>
+      </view>
+      <view class="tool-item" bindtap="goToMaterialLibrary">
+        <view class="tool-icon">📚</view>
+        <view class="tool-name">作文素材</view>
+        <view class="tool-desc">小众意象素材库</view>
+      </view>
+      <view class="tool-item" bindtap="goToLectureGenerator">
+        <view class="tool-icon">🎯</view>
+        <view class="tool-name">讲评课生成</view>
+        <view class="tool-desc">生成作文讲评课</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近任务 -->
+  <view class="card">
+    <view class="card-title">最近任务</view>
+    <view wx:if="{{recentBatches.length > 0}}">
+      <view class="recent-item" wx:for="{{recentBatches}}" wx:key="id" bindtap="goToBatchDetail" data-id="{{item.id}}">
+        <view class="recent-info">
+          <view class="recent-name">{{item.batchName}}</view>
+          <view class="recent-meta">{{item.studentCount}} 名学生 · {{item.statusText}}</view>
+        </view>
+        <view class="recent-arrow">›</view>
+      </view>
+    </view>
+    <view wx:else class="empty-state">
+      暂无最近任务
+    </view>
+  </view>
+
+  <!-- 最近文件 -->
+  <view class="card">
+    <view class="card-title">最近文件</view>
+    <view wx:if="{{recentFiles.length > 0}}">
+      <view class="file-item" wx:for="{{recentFiles}}" wx:key="id" bindtap="downloadFile" data-url="{{item.fileUrl}}">
+        <view class="file-icon">{{item.fileType === 'docx' ? '📄' : '📑'}}</view>
+        <view class="file-info">
+          <view class="file-name">{{item.fileName}}</view>
+          <view class="file-time">{{item.createdAt}}</view>
+        </view>
+        <view class="file-download">下载</view>
+      </view>
+    </view>
+    <view wx:else class="empty-state">
+      暂无最近文件
+    </view>
+  </view>
+</view>

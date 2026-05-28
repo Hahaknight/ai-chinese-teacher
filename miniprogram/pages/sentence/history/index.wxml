@@ -1,0 +1,15 @@
+<view class="container">
+  <view class="history-list" wx:if="{{records.length > 0}}">
+    <view class="history-item" wx:for="{{records}}" wx:key="id" bindtap="viewDetail" data-id="{{item.id}}">
+      <view class="history-content">
+        <view class="original-sentence">{{item.originalSentence}}</view>
+        <view class="fixed-sentence">{{item.fixedSentence}}</view>
+      </view>
+      <view class="history-time">{{item.createdAt}}</view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text>暂无修改记录</text>
+  </view>
+</view>

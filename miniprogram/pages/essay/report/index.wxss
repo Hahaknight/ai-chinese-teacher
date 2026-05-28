@@ -1,0 +1,191 @@
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.student-name {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.task-score .score-num {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #0082FF;
+}
+
+.task-score .score-total {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #999;
+  font-size: 28rpx;
+}
+
+.info-value {
+  color: #333;
+  font-size: 28rpx;
+}
+
+.score-total-row {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 30rpx;
+}
+
+.score-label {
+  color: #999;
+  font-size: 28rpx;
+  margin-right: 16rpx;
+}
+
+.score-big {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #0082FF;
+}
+
+.score-max {
+  font-size: 32rpx;
+  color: #999;
+}
+
+.score-items {
+  margin-top: 20rpx;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.score-item-name {
+  width: 160rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.score-item-bar {
+  flex: 1;
+  height: 16rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin: 0 16rpx;
+  overflow: hidden;
+}
+
+.score-item-fill {
+  height: 100%;
+  background-color: #0082FF;
+  border-radius: 8rpx;
+}
+
+.score-item-score {
+  width: 80rpx;
+  font-size: 24rpx;
+  color: #333;
+  text-align: right;
+}
+
+.highlight-item, .problem-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 12rpx 0;
+}
+
+.highlight-bullet {
+  color: #4caf50;
+  font-size: 28rpx;
+  margin-right: 16rpx;
+}
+
+.highlight-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+.problem-bullet {
+  color: #f44336;
+  font-size: 28rpx;
+  margin-right: 16rpx;
+}
+
+.problem-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+.suggestion-item {
+  display: flex;
+  padding: 12rpx 0;
+}
+
+.suggestion-bullet {
+  font-size: 28rpx;
+  color: #0082FF;
+  margin-right: 16rpx;
+}
+
+.suggestion-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+}
+
+.comment-content, .essay-content {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.short-comment {
+  font-size: 32rpx;
+  color: #0082FF;
+  font-weight: 600;
+  padding: 20rpx;
+  background-color: #f0f5ff;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.btn-copy {
+  background-color: #0082FF;
+  color: #fff;
+}
+
+.action-buttons {
+  margin-top: 30rpx;
+}
+
+.action-buttons button {
+  margin-bottom: 20rpx;
+}

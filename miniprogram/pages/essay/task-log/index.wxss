@@ -1,0 +1,47 @@
+.batch-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.batch-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.batch-info {
+  flex: 1;
+}
+
+.batch-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.batch-meta {
+  display: flex;
+  gap: 16rpx;
+}
+
+.status {
+  font-size: 24rpx;
+  color: #0082FF;
+}
+
+.count {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.batch-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  margin-left: 20rpx;
+}

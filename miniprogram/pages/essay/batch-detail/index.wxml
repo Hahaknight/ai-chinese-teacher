@@ -1,0 +1,42 @@
+<view class="container">
+  <!-- 批次信息 -->
+  <view class="batch-info card">
+    <view class="batch-name">{{batch.batchName}}</view>
+    <view class="batch-status status-{{batch.status}}">{{statusText}}</view>
+  </view>
+
+  <!-- 学生列表 -->
+  <view class="card">
+    <view class="section-title">学生作文 ({{tasks.length}})</view>
+
+    <view wx:if="{{tasks.length > 0}}">
+      <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="goToTask" data-id="{{item.id}}" data-status="{{item.status}}">
+        <view class="task-info">
+          <view class="student-name">{{item.studentName}}</view>
+          <view class="task-meta">{{item.imageCount}} 张图片 · {{item.statusText}}</view>
+        </view>
+        <view class="task-score" wx:if="{{item.score !== null}}">
+          <text class="score-num">{{item.score}}</text>
+          <text class="score-total">/{{item.fullScore}}</text>
+        </view>
+        <view class="task-arrow" wx:if="{{item.status === 'success'}}">›</view>
+        <view class="task-retry" wx:if="{{item.status === 'failed'}}" catchtap="retryTask" data-id="{{item.id}}">重新</view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      还没有添加学生，点击下方按钮添加
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-default" bindtap="addStudent">添加学生作文</button>
+    <button class="btn-primary" bindtap="startCorrection" wx:if="{{batch.status === 'pending' && tasks.length > 0}}">开始批量批改</button>
+  </view>
+
+  <!-- 正在批改中 -->
+  <view class="processing-tip" wx:if="{{batch.status === 'processing'}}">
+    <text>批改中，请稍候...</text>
+  </view>
+</view>

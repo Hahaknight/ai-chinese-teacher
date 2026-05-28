@@ -1,0 +1,96 @@
+.lecture-header {
+  text-align: center;
+}
+
+.lecture-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.section-content {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.7;
+}
+
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 8rpx 0;
+}
+
+.bullet {
+  color: #0082FF;
+  margin-right: 12rpx;
+}
+
+.text {
+  flex: 1;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.problem-block, .practice-block {
+  margin-bottom: 24rpx;
+  padding: 20rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.problem-item, .practice-item {
+  display: flex;
+  margin-bottom: 12rpx;
+}
+
+.problem-item:last-child, .practice-item:last-child {
+  margin-bottom: 0;
+}
+
+.problem-label, .practice-label {
+  font-weight: 600;
+  color: #333;
+  margin-right: 8rpx;
+}
+
+.problem-text, .practice-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.6;
+}
+
+.practice-item.answer {
+  background-color: #e8f5e9;
+  padding: 12rpx;
+  border-radius: 8rpx;
+}
+
+.expression-block {
+  padding: 16rpx;
+  background-color: #f0f5ff;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.expression-text {
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.7;
+}
+
+.action-buttons {
+  margin-top: 40rpx;
+}
+
+.action-buttons button {
+  margin-bottom: 20rpx;
+}

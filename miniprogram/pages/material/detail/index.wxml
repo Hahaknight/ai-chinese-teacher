@@ -1,0 +1,59 @@
+<view class="container">
+  <!-- 素材标题 -->
+  <view class="material-header card">
+    <view class="material-title">{{material.title}}</view>
+    <view class="material-category">{{material.category}}</view>
+  </view>
+
+  <!-- 核心特点 -->
+  <view class="card">
+    <view class="section-title">核心特点</view>
+    <view class="section-content">{{material.coreFeature}}</view>
+  </view>
+
+  <!-- 引申含义 -->
+  <view class="card">
+    <view class="section-title">引申含义</view>
+    <view class="section-content">{{material.symbolicMeaning}}</view>
+  </view>
+
+  <!-- 适用主题 -->
+  <view class="card">
+    <view class="section-title">适用主题</view>
+    <view class="section-content">{{material.suitableThemes}}</view>
+  </view>
+
+  <!-- 使用角度 -->
+  <view class="card">
+    <view class="section-title">使用角度</view>
+    <view class="section-content">{{material.usageAngle}}</view>
+  </view>
+
+  <!-- 示范片段 -->
+  <view class="card">
+    <view class="section-title">示范片段</view>
+    <view class="section-content sample">{{material.sampleParagraph}}</view>
+    <button class="btn-copy" bindtap="copyParagraph">复制片段</button>
+  </view>
+
+  <!-- 适合题目 -->
+  <view class="card">
+    <view class="section-title">适合题目</view>
+    <view class="topics-list">
+      <text class="topic-item" wx:for="{{material.suitableTopics}}" wx:key="index">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 避坑提醒 -->
+  <view class="card warning-card" wx:if="{{material.warning}}">
+    <view class="section-title warning-title">避坑提醒</view>
+    <view class="section-content">{{material.warning}}</view>
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="action-bar">
+    <button class="btn-favorite {{material.isFavorited ? 'active' : ''}}" bindtap="toggleFavorite">
+      {{material.isFavorited ? '已收藏' : '收藏'}}
+    </button>
+  </view>
+</view>

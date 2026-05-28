@@ -1,0 +1,16 @@
+{
+  "name": "ai-chinese-teacher-miniprogram",
+  "version": "1.0.0",
+  "description": "AI语文教学助手小程序",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "npm run watch",
+    "watch": "miniprogram watch",
+    "build": "miniprogram build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}

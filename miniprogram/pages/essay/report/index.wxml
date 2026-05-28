@@ -1,0 +1,96 @@
+<view class="container">
+  <!-- 学生信息 -->
+  <view class="student-header card">
+    <view class="student-name">{{task.studentName}}</view>
+    <view class="task-score" wx:if="{{task.score !== null}}">
+      <text class="score-num">{{task.score}}</text>
+      <text class="score-total">/{{task.fullScore}}分</text>
+    </view>
+  </view>
+
+  <!-- 基本信息 -->
+  <view class="card">
+    <view class="section-title">基础信息</view>
+    <view class="info-row">
+      <text class="info-label">批次名称</text>
+      <text class="info-value">{{task.batchName}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">批改时间</text>
+      <text class="info-value">{{task.createdAt}}</text>
+    </view>
+  </view>
+
+  <!-- 评分详情 -->
+  <view class="card" wx:if="{{task.reviewResult}}">
+    <view class="section-title">作文评分</view>
+    <view class="score-total-row">
+      <text class="score-label">总分</text>
+      <text class="score-big">{{task.reviewResult.score.total}}</text>
+      <text class="score-max">/{{task.reviewResult.score.fullScore}}</text>
+    </view>
+
+    <view class="score-items">
+      <view class="score-item" wx:for="{{task.reviewResult.score.items}}" wx:key="name">
+        <view class="score-item-name">{{item.name}}</view>
+        <view class="score-item-bar">
+          <view class="score-item-fill" style="width: {{item.score / item.fullScore * 100}}%"></view>
+        </view>
+        <view class="score-item-score">{{item.score}}/{{item.fullScore}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 作文亮点 -->
+  <view class="card" wx:if="{{task.reviewResult.highlights.length > 0}}">
+    <view class="section-title">作文亮点</view>
+    <view class="highlight-item" wx:for="{{task.reviewResult.highlights}}" wx:key="index">
+      <text class="highlight-bullet">✓</text>
+      <text class="highlight-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 主要问题 -->
+  <view class="card" wx:if="{{task.reviewResult.problems.length > 0}}">
+    <view class="section-title">主要问题</view>
+    <view class="problem-item" wx:for="{{task.reviewResult.problems}}" wx:key="index">
+      <text class="problem-bullet">✗</text>
+      <text class="problem-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 修改建议 -->
+  <view class="card" wx:if="{{task.reviewResult.suggestions.length > 0}}">
+    <view class="section-title">修改建议</view>
+    <view class="suggestion-item" wx:for="{{task.reviewResult.suggestions}}" wx:key="index">
+      <text class="suggestion-bullet">{{index + 1}}.</text>
+      <text class="suggestion-text">{{item}}</text>
+    </view>
+  </view>
+
+  <!-- 总评 -->
+  <view class="card" wx:if="{{task.reviewResult.overallComment}}">
+    <view class="section-title">作文总评</view>
+    <view class="comment-content">{{task.reviewResult.overallComment}}</view>
+  </view>
+
+  <!-- 改良作文 -->
+  <view class="card" wx:if="{{task.reviewResult.improvedEssay}}">
+    <view class="section-title">改良后的作文</view>
+    <view class="essay-content">{{task.reviewResult.improvedEssay}}</view>
+  </view>
+
+  <!-- 简短评语 -->
+  <view class="card" wx:if="{{task.shortComment}}">
+    <view class="section-title">教师简短评语</view>
+    <view class="short-comment">{{task.shortComment}}</view>
+    <button class="btn-copy" bindtap="copyComment">复制评语</button>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="btn-default" bindtap="exportWord" wx:if="{{task.wordUrl}}">导出 Word</button>
+    <button class="btn-default" bindtap="exportPDF" wx:if="{{task.pdfUrl}}">导出 PDF</button>
+    <button class="btn-primary" bindtap="retryTask">重新批改</button>
+  </view>
+</view>

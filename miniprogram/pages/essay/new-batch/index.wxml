@@ -1,0 +1,17 @@
+<view class="container">
+  <view class="card">
+    <view class="form-group">
+      <view class="form-label">批次名称</view>
+      <input class="form-input" placeholder="例如：五年级上册第一次作文批改" value="{{batchName}}" bindinput="onBatchNameInput" />
+    </view>
+
+    <view class="form-group">
+      <view class="form-label">批改要求</view>
+      <textarea class="form-textarea" placeholder="请输入作文主题，也可以输入评分标准。&#10;&#10;示例：&#10;作文主题：那一刻，我长大了&#10;&#10;评分标准：&#10;1. 事件完整，能体现成长过程。&#10;2. 有细节描写和心理描写。&#10;3. 结构完整，结尾有感悟。&#10;4. 满分50分。" value="{{reviewRequirement}}" bindinput="onReviewRequirementInput" />
+    </view>
+
+    <view class="btn-wrapper">
+      <button class="btn-primary" bindtap="createBatch">创建批次</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,32 @@
+.batch-item, .lecture-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.batch-item:last-child, .lecture-item:last-child {
+  border-bottom: none;
+}
+
+.batch-info, .lecture-info {
+  flex: 1;
+}
+
+.batch-name, .lecture-title {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.batch-meta, .lecture-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.batch-arrow, .lecture-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  margin-left: 20rpx;
+}

@@ -1,0 +1,18 @@
+<view class="container">
+  <view class="batch-list" wx:if="{{batches.length > 0}}">
+    <view class="batch-item" wx:for="{{batches}}" wx:key="id" bindtap="goToBatchDetail" data-id="{{item.id}}">
+      <view class="batch-info">
+        <view class="batch-name">{{item.batchName}}</view>
+        <view class="batch-meta">
+          <text class="status">{{item.statusText}}</text>
+          <text class="count">{{item.totalCount}} 名学生</text>
+        </view>
+      </view>
+      <view class="batch-arrow">›</view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text>暂无批改记录</text>
+  </view>
+</view>

@@ -1,0 +1,87 @@
+.material-header {
+  text-align: center;
+}
+
+.material-title {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.material-category {
+  display: inline-block;
+  padding: 8rpx 24rpx;
+  background-color: #0082FF;
+  color: #fff;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.section-content {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.7;
+}
+
+.section-content.sample {
+  background-color: #f8f9fa;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #0082FF;
+}
+
+.btn-copy {
+  background-color: #0082FF;
+  color: #fff;
+  margin-top: 16rpx;
+}
+
+.topics-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.topic-item {
+  padding: 8rpx 20rpx;
+  background-color: #f0f5ff;
+  color: #0082FF;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+}
+
+.warning-card {
+  background-color: #fff3e0;
+}
+
+.warning-title {
+  color: #ff9800;
+}
+
+.action-bar {
+  margin-top: 40rpx;
+}
+
+.btn-favorite {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background-color: #fff;
+  color: #0082FF;
+  border: 2rpx solid #0082FF;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+}
+
+.btn-favorite.active {
+  background-color: #0082FF;
+  color: #fff;
+}

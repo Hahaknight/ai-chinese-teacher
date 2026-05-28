@@ -1,0 +1,33 @@
+.material-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.material-item {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.material-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.material-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.tag {
+  padding: 4rpx 12rpx;
+  background-color: #f0f5ff;
+  color: #0082FF;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+}

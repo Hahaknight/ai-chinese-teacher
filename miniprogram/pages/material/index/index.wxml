@@ -1,0 +1,32 @@
+<view class="container">
+  <!-- 搜索框 -->
+  <view class="search-bar">
+    <input class="search-input" placeholder="搜索素材主题/意象/关键词" value="{{keyword}}" bindinput="onKeywordInput" />
+    <button class="search-btn" bindtap="search">搜索</button>
+  </view>
+
+  <!-- 分类标签 -->
+  <view class="category-tabs">
+    <view class="category-item {{selectedCategory === '全部' ? 'active' : ''}}" bindtap="selectCategory" data-category="全部">全部</view>
+    <view class="category-item {{selectedCategory === '成长' ? 'active' : ''}}" bindtap="selectCategory" data-category="成长">成长</view>
+    <view class="category-item {{selectedCategory === '坚持' ? 'active' : ''}}" bindtap="selectCategory" data-category="坚持">坚持</view>
+    <view class="category-item {{selectedCategory === '亲情' ? 'active' : ''}}" bindtap="selectCategory" data-category="亲情">亲情</view>
+    <view class="category-item {{selectedCategory === '时间' ? 'active' : ''}}" bindtap="selectCategory" data-category="时间">时间</view>
+    <view class="category-item {{selectedCategory === '观察生活' ? 'active' : ''}}" bindtap="selectCategory" data-category="观察生活">观察生活</view>
+  </view>
+
+  <!-- 素材列表 -->
+  <view class="material-list">
+    <view class="material-item" wx:for="{{materials}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}">
+      <view class="material-title">{{item.title}}</view>
+      <view class="material-tags">
+        <text class="tag" wx:for="{{item.tags}}" wx:key="index" wx:for-item="tag">{{tag}}</text>
+      </view>
+      <view class="material-preview">{{item.sampleParagraph}}</view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{materials.length === 0 && !loading}}">
+    <text>暂无素材</text>
+  </view>
+</view>

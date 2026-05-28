@@ -1,0 +1,118 @@
+.batch-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.batch-name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.batch-status {
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+  font-size: 24rpx;
+}
+
+.status-pending {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+.status-processing {
+  background-color: #fff3e0;
+  color: #ff9800;
+}
+
+.status-completed {
+  background-color: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-partial {
+  background-color: #fff8e1;
+  color: #ffc107;
+}
+
+.status-failed {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.task-item:last-child {
+  border-bottom: none;
+}
+
+.task-info {
+  flex: 1;
+}
+
+.student-name {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.task-meta {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.task-score {
+  margin-right: 20rpx;
+}
+
+.score-num {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #0082FF;
+}
+
+.score-total {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.task-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+}
+
+.task-retry {
+  color: #0082FF;
+  font-size: 28rpx;
+  padding: 8rpx 16rpx;
+  border: 2rpx solid #0082FF;
+  border-radius: 20rpx;
+}
+
+.action-buttons {
+  margin-top: 30rpx;
+}
+
+.action-buttons button {
+  margin-bottom: 20rpx;
+}
+
+.processing-tip {
+  text-align: center;
+  padding: 30rpx;
+  color: #999;
+  font-size: 28rpx;
+}
