@@ -12,12 +12,13 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.24.0",
     "@prisma/client": "^5.14.0",
     "axios": "^1.16.1",
     "cors": "^2.8.5",
     "docx": "^8.5.0",
     "express": "^4.19.2",
+    "json5": "^2.2.3",
+    "jsonc-parser": "^3.3.1",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "uuid": "^9.0.1"

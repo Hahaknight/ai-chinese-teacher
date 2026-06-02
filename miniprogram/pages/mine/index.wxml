@@ -1,2 +1,71 @@
-<!--pages/mine/index.wxml-->
-<text>pages/mine/index.wxml</text>
+<view class="container">
+  <!-- 用户信息 -->
+  <view class="user-card">
+    <view class="avatar">{{userInfo.nickname || '老师'}}</view>
+    <view class="user-info">
+      <view class="nickname">{{userInfo.nickname || '老师'}}</view>
+      <view class="tip">AI 语文教学助手</view>
+    </view>
+  </view>
+
+  <!-- 我的记录 -->
+  <view class="card">
+    <view class="card-title">我的记录</view>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goToEssayRecords">
+        <view class="menu-icon">📝</view>
+        <view class="menu-text">作文批改记录</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-item" bindtap="goToLectureRecords">
+        <view class="menu-icon">🎯</view>
+        <view class="menu-text">讲评课记录</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-item" bindtap="goToSentenceHistory">
+        <view class="menu-icon">✏️</view>
+        <view class="menu-text">病句修改记录</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-item" bindtap="goToFavoriteMaterials">
+        <view class="menu-icon">📚</view>
+        <view class="menu-text">收藏素材</view>
+        <view class="menu-arrow">›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 文件管理 -->
+  <view class="card">
+    <view class="card-title">文件管理</view>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goToFiles">
+        <view class="menu-icon">📁</view>
+        <view class="menu-text">已生成文档</view>
+        <view class="menu-arrow">›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 设置 -->
+  <view class="card">
+    <view class="card-title">设置</view>
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goToSettings">
+        <view class="menu-icon">⚙️</view>
+        <view class="menu-text">默认评分标准</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-item" bindtap="goToHelp">
+        <view class="menu-icon">❓</view>
+        <view class="menu-text">使用说明</view>
+        <view class="menu-arrow">›</view>
+      </view>
+      <view class="menu-item" bindtap="goToAbout">
+        <view class="menu-icon">ℹ️</view>
+        <view class="menu-text">关于我们</view>
+        <view class="menu-arrow">›</view>
+      </view>
+    </view>
+  </view>
+</view>

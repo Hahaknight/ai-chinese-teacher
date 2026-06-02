@@ -11,8 +11,8 @@
       <view class="file-info">
         <view class="file-name">{{item.fileName}}</view>
         <view class="file-meta">
-          <text class="file-size">{{item.fileSize || '未知大小'}}</text>
-          <text class="file-time">{{item.createdAt}}</text>
+          <text class="file-size">{{item.fileSizeText}}</text>
+          <text class="file-time">{{item.createdAtText}}</text>
         </view>
       </view>
       <view class="file-download">打开</view>

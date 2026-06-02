@@ -1,3 +1,5 @@
+const { request } = require('../../../utils/request');
+
 Page({
   data: {
     materials: []
@@ -12,18 +14,11 @@ Page({
   },
 
   loadFavorites() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/materials/favorites/list`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ materials: res.data.data });
-        }
-      }
-    });
+    request({ url: '/materials/favorites/list', hideLoading: true })
+      .then(res => {
+        this.setData({ materials: res.data || [] });
+      })
+      .catch(() => {});
   },
 
   goToDetail(e) {

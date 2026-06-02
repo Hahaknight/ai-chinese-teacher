@@ -51,7 +51,7 @@
         <view class="file-icon">{{item.fileType === 'docx' ? '📄' : '📑'}}</view>
         <view class="file-info">
           <view class="file-name">{{item.fileName}}</view>
-          <view class="file-time">{{item.createdAt}}</view>
+          <view class="file-time">{{item.fileSizeText || ''}} {{item.createdAtText || item.createdAt}}</view>
         </view>
         <view class="file-download">下载</view>
       </view>

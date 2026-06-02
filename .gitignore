@@ -1,0 +1,26 @@
+node_modules/
+.env
+*.log
+dist/
+.DS_Store
+*.db
+*.db-journal
+*.tar.gz
+*.tar.gz.b64
+
+# 微信小程序本地调试
+miniprogram/*.jpg
+miniprogram/*.jpeg
+miniprogram/*.png
+miniprogram/1.jpg
+
+# 后端本地运行时产物
+server/uploads/
+server/temp/
+server/dist/
+
+# 本地 IDE / 工具配置
+.claude/
+miniprogram/.cloudbase/
+.vscode/
+.idea/

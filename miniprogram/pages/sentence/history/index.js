@@ -1,3 +1,6 @@
+const { request } = require('../../../utils/request');
+const { formatDateShort } = require('../../../utils/format');
+
 Page({
   data: {
     records: []
@@ -8,18 +11,15 @@ Page({
   },
 
   loadHistory() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/sentence-fix/history`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ records: res.data.data });
-        }
-      }
-    });
+    request({ url: '/sentence-fix/history', hideLoading: true })
+      .then(res => {
+        const records = (res.data || []).map(r => ({
+          ...r,
+          createdAtText: formatDateShort(r.createdAt)
+        }));
+        this.setData({ records });
+      })
+      .catch(() => {});
   },
 
   viewDetail(e) {

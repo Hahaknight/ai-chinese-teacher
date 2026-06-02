@@ -6,7 +6,7 @@ import essayRoutes from './routes/essay';
 import sentenceRoutes from './routes/sentence';
 import materialRoutes from './routes/material';
 import lectureRoutes from './routes/lecture';
-import fileRoutes from './routes/file';
+import fileRoutes, { UPLOAD_DIR } from './routes/file';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +15,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve uploaded files locally
+app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Routes
 app.use('/api/wechat', authRoutes);
@@ -36,9 +39,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Initialize database and start server
+const HOST = process.env.HOST || '0.0.0.0';
+
 initDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+  app.listen(Number(PORT), HOST, () => {
+    console.log(`Server is running on http://${HOST}:${PORT}`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);

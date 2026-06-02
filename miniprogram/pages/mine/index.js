@@ -1,66 +1,47 @@
-// pages/mine/index.js
 Page({
-
-  /**
-   * 页面的初始数据
-   */
   data: {
-
+    userInfo: null
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options) {
-
+  onLoad() {
+    const userInfo = wx.getStorageSync('userInfo');
+    this.setData({ userInfo: userInfo || {} });
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
   onShow() {
-
+    const userInfo = wx.getStorageSync('userInfo');
+    this.setData({ userInfo: userInfo || {} });
   },
 
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
+  goToEssayRecords() {
+    wx.navigateTo({ url: '/pages/essay/task-log/index' });
   },
 
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
+  goToLectureRecords() {
+    wx.navigateTo({ url: '/pages/lecture/index/index' });
   },
 
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
+  goToSentenceHistory() {
+    wx.navigateTo({ url: '/pages/sentence/history/index' });
   },
 
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
+  goToFavoriteMaterials() {
+    wx.navigateTo({ url: '/pages/material/favorites/index' });
   },
 
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
+  goToFiles() {
+    wx.navigateTo({ url: '/pages/files/index' });
+  },
 
+  goToSettings() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  goToHelp() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
+  },
+
+  goToAbout() {
+    wx.showToast({ title: '功能开发中', icon: 'none' });
   }
-})
+});

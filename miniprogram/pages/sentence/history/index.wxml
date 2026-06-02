@@ -5,7 +5,7 @@
         <view class="original-sentence">{{item.originalSentence}}</view>
         <view class="fixed-sentence">{{item.fixedSentence}}</view>
       </view>
-      <view class="history-time">{{item.createdAt}}</view>
+      <view class="history-time">{{item.createdAtText || item.createdAt}}</view>
     </view>
   </view>
 

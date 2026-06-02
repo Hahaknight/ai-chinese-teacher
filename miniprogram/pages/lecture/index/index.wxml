@@ -24,7 +24,7 @@
     <view class="lecture-item" wx:for="{{lectures}}" wx:key="id" bindtap="goToLecture" data-id="{{item.id}}">
       <view class="lecture-info">
         <view class="lecture-title">{{item.title}}</view>
-        <view class="lecture-time">{{item.createdAt}}</view>
+        <view class="lecture-time">{{item.createdAtText || item.createdAt}}</view>
       </view>
       <view class="lecture-arrow">›</view>
     </view>

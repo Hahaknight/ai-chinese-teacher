@@ -2,7 +2,7 @@
   <!-- 批次信息 -->
   <view class="batch-info card">
     <view class="batch-name">{{batch.batchName}}</view>
-    <view class="batch-status status-{{batch.status}}">{{statusText}}</view>
+    <view class="batch-status {{batch.status === 'completed' ? 'status-completed' : batch.status === 'processing' ? 'status-processing' : batch.status === 'partial' ? 'status-partial' : batch.status === 'failed' ? 'status-failed' : 'status-pending'}}">{{batch.statusText || statusText}}</view>
   </view>
 
   <!-- 学生列表 -->
@@ -33,6 +33,11 @@
   <view class="action-buttons">
     <button class="btn-default" bindtap="addStudent">添加学生作文</button>
     <button class="btn-primary" bindtap="startCorrection" wx:if="{{batch.status === 'pending' && tasks.length > 0}}">开始批量批改</button>
+  </view>
+
+  <!-- 危险操作 -->
+  <view class="danger-zone">
+    <button class="btn-danger" bindtap="deleteBatch">删除此批次</button>
   </view>
 
   <!-- 正在批改中 -->

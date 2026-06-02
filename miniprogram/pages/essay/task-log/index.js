@@ -1,3 +1,6 @@
+const { request } = require('../../../utils/request');
+const { BATCH_STATUS } = require('../../../utils/config');
+
 Page({
   data: {
     batches: []
@@ -12,29 +15,15 @@ Page({
   },
 
   loadBatches() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/essay-batches`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          const statusMap = {
-            'pending': '待批改',
-            'processing': '批改中',
-            'completed': '已完成',
-            'partial': '部分完成',
-            'failed': '失败'
-          };
-          const batches = res.data.data.map(b => ({
-            ...b,
-            statusText: statusMap[b.status] || b.status
-          }));
-          this.setData({ batches });
-        }
-      }
-    });
+    request({ url: '/essay-batches', hideLoading: true })
+      .then(res => {
+        const batches = (res.data || []).map(b => ({
+          ...b,
+          statusText: BATCH_STATUS[b.status] || b.status
+        }));
+        this.setData({ batches });
+      })
+      .catch(() => {});
   },
 
   goToBatchDetail(e) {

@@ -1,3 +1,7 @@
+const { request } = require('../../../utils/request');
+const { BATCH_STATUS } = require('../../../utils/config');
+const { formatDateShort } = require('../../../utils/format');
+
 Page({
   data: {
     batches: [],
@@ -13,36 +17,27 @@ Page({
   },
 
   loadData() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    // Get batches with completed status
-    wx.request({
-      url: `${app.globalData.baseUrl}/essay-batches`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          const batches = res.data.data.filter(b =>
-            b.status === 'completed' || b.status === 'partial'
-          ).map(b => ({
+    request({ url: '/essay-batches', hideLoading: true })
+      .then(res => {
+        const batches = (res.data || [])
+          .filter(b => b.status === 'completed' || b.status === 'partial')
+          .map(b => ({
             ...b,
-            statusText: b.status === 'completed' ? '已完成' : '部分完成'
+            statusText: BATCH_STATUS[b.status] || b.status
           }));
-          this.setData({ batches });
-        }
-      }
-    });
+        this.setData({ batches });
+      })
+      .catch(() => {});
 
-    // Get lecture reviews
-    wx.request({
-      url: `${app.globalData.baseUrl}/lecture-reviews`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ lectures: res.data.data });
-        }
-      }
-    });
+    request({ url: '/lecture-reviews', hideLoading: true })
+      .then(res => {
+        const lectures = (res.data || []).map(l => ({
+          ...l,
+          createdAtText: formatDateShort(l.createdAt)
+        }));
+        this.setData({ lectures });
+      })
+      .catch(() => {});
   },
 
   selectBatch(e) {
@@ -60,32 +55,18 @@ Page({
   },
 
   generateLecture(batchId) {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.showLoading({ title: '生成中...' });
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/lecture-reviews`,
+    request({
+      url: '/lecture-reviews',
       method: 'POST',
-      header: { Authorization: `Bearer ${token}` },
-      data: { batchId },
-      success: res => {
-        wx.hideLoading();
-        if (res.data.code === 0) {
-          wx.showToast({ title: '生成成功', icon: 'success' });
-          setTimeout(() => {
-            wx.navigateTo({ url: `/pages/lecture/detail/index?id=${res.data.data.id}` });
-          }, 1000);
-        } else {
-          wx.showToast({ title: res.data.message || '生成失败', icon: 'none' });
-        }
-      },
-      fail: () => {
-        wx.hideLoading();
-        wx.showToast({ title: '网络错误', icon: 'none' });
-      }
-    });
+      data: { batchId }
+    })
+      .then(res => {
+        wx.showToast({ title: '生成成功', icon: 'success' });
+        setTimeout(() => {
+          wx.navigateTo({ url: `/pages/lecture/detail/index?id=${res.data.id}` });
+        }, 1000);
+      })
+      .catch(() => {});
   },
 
   goToLecture(e) {

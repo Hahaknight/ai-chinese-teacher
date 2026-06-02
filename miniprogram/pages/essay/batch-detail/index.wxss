@@ -116,3 +116,24 @@
   color: #999;
   font-size: 28rpx;
 }
+
+.danger-zone {
+  margin-top: 40rpx;
+  text-align: center;
+}
+
+.btn-danger {
+  background-color: #fff;
+  color: #e54d42;
+  border: 2rpx solid #e54d42;
+  border-radius: 40rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 28rpx;
+  display: inline-block;
+  padding: 0 40rpx;
+}
+
+.btn-danger::after {
+  border: none;
+}

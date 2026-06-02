@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { getPrisma } from '../utils/db';
 import { authMiddleware, AuthRequest } from '../middlewares/auth';
 import { processEssayTask } from '../services/essay.service';
-import { v4 as uuidv4 } from 'uuid';
+import { toPublicFileUrl } from './file';
 
 const router = Router();
 
@@ -115,7 +115,7 @@ router.get('/recent', async (req: AuthRequest, res: Response) => {
 });
 
 // Get batch detail
-router.get('/:batchId', async (req: AuthRequest, res: Response) => {
+router.get('/:batchId([0-9a-fA-F-]{36})', async (req: AuthRequest, res: Response) => {
   try {
     const { batchId } = req.params;
     const userId = req.userId!;
@@ -155,8 +155,8 @@ router.get('/:batchId', async (req: AuthRequest, res: Response) => {
           status: t.status,
           score: t.score,
           fullScore: t.fullScore,
-          wordUrl: t.wordUrl,
-          pdfUrl: t.pdfUrl,
+          wordUrl: toPublicFileUrl(t.wordUrl, req),
+          pdfUrl: toPublicFileUrl(t.pdfUrl, req),
           errorMessage: t.errorMessage
         }))
       }
@@ -167,13 +167,13 @@ router.get('/:batchId', async (req: AuthRequest, res: Response) => {
 });
 
 // Delete batch
-router.delete('/:batchId', async (req: AuthRequest, res: Response) => {
+router.delete('/:batchId([0-9a-fA-F-]{36})', async (req: AuthRequest, res: Response) => {
   try {
     const { batchId } = req.params;
     const userId = req.userId!;
     const prisma = getPrisma();
 
-    await prisma.essayBatch.delete({
+    await prisma.essayBatch.deleteMany({
       where: { id: batchId, userId }
     });
 
@@ -190,7 +190,7 @@ router.post('/:batchId/tasks', async (req: AuthRequest, res: Response) => {
     const { studentName, imageUrls } = req.body;
     const userId = req.userId!;
 
-    if (!studentName || !imageUrls || imageUrls.length === 0) {
+    if (!studentName || !Array.isArray(imageUrls) || imageUrls.length === 0) {
       res.status(400).json({ code: 400, message: 'studentName and imageUrls are required' });
       return;
     }
@@ -265,9 +265,9 @@ router.get('/:batchId/tasks', async (req: AuthRequest, res: Response) => {
         status: t.status,
         score: t.score,
         fullScore: t.fullScore,
-        wordUrl: t.wordUrl,
-        pdfUrl: t.pdfUrl,
-        errorMessage: t.errorMessage
+          wordUrl: toPublicFileUrl(t.wordUrl, req),
+          pdfUrl: toPublicFileUrl(t.pdfUrl, req),
+          errorMessage: t.errorMessage
       }))
     });
   } catch (err: any) {
@@ -351,8 +351,9 @@ router.get('/tasks/:taskId', async (req: AuthRequest, res: Response) => {
         recognizedText: task.recognizedText,
         reviewResult: task.reviewResultJson ? JSON.parse(task.reviewResultJson) : null,
         shortComment: task.shortComment,
-        wordUrl: task.wordUrl,
-        pdfUrl: task.pdfUrl,
+        imageUrls: task.imageUrls,
+        wordUrl: toPublicFileUrl(task.wordUrl, req),
+        pdfUrl: toPublicFileUrl(task.pdfUrl, req),
         score: task.score,
         fullScore: task.fullScore,
         errorMessage: task.errorMessage,

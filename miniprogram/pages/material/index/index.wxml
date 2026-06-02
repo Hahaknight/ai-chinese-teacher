@@ -8,11 +8,7 @@
   <!-- 分类标签 -->
   <view class="category-tabs">
     <view class="category-item {{selectedCategory === '全部' ? 'active' : ''}}" bindtap="selectCategory" data-category="全部">全部</view>
-    <view class="category-item {{selectedCategory === '成长' ? 'active' : ''}}" bindtap="selectCategory" data-category="成长">成长</view>
-    <view class="category-item {{selectedCategory === '坚持' ? 'active' : ''}}" bindtap="selectCategory" data-category="坚持">坚持</view>
-    <view class="category-item {{selectedCategory === '亲情' ? 'active' : ''}}" bindtap="selectCategory" data-category="亲情">亲情</view>
-    <view class="category-item {{selectedCategory === '时间' ? 'active' : ''}}" bindtap="selectCategory" data-category="时间">时间</view>
-    <view class="category-item {{selectedCategory === '观察生活' ? 'active' : ''}}" bindtap="selectCategory" data-category="观察生活">观察生活</view>
+    <view class="category-item {{selectedCategory === item ? 'active' : ''}}" wx:for="{{categories}}" wx:key="*this" bindtap="selectCategory" data-category="{{item}}">{{item}}</view>
   </view>
 
   <!-- 素材列表 -->

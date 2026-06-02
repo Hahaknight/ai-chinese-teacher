@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { getPrisma } from '../utils/db';
 import { authMiddleware, AuthRequest } from '../middlewares/auth';
-import Anthropic from '@anthropic-ai/sdk';
+import { createMessage, extractJson } from '../utils/ai';
 
 const router = Router();
 router.use(authMiddleware);
@@ -17,54 +17,36 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const anthropic = new Anthropic();
-
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241107',
-      max_tokens: 1024,
-      messages: [{
-        role: 'user',
-        content: `你是一名语文老师，擅长给学生讲解病句修改。
-
-请分析用户输入的句子，指出问题，并给出修改版本。
-
-要求：
+    const systemPrompt = `你是一名语文老师,擅长给学生讲解病句修改。
+要求:
 1. 说明原句有什么问题。
 2. 给出一个自然、通顺、适合学生理解的修改版本。
 3. 用简洁语言解释为什么这样修改。
 4. 给出一个同类错误示例。
-5. 输出严格 JSON，不要输出 Markdown。
+5. 严格输出 JSON,不要输出 Markdown。`;
 
-返回格式：
+    const userPrompt = `原句:${sentence}
+
+返回格式:
 {
   "originalSentence": "原句",
   "problemAnalysis": "问题分析",
   "fixedSentence": "修改版本",
   "explanation": "讲解说明",
   "similarExample": "同类示例"
-}
+}`;
 
-原句：${sentence}`
-      }]
+    const aiText = await createMessage({
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxTokens: 1024
     });
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Invalid response from AI');
-    }
-
-    // Parse JSON response
     let result;
     try {
-      result = JSON.parse(content.text);
-    } catch {
-      // Try to extract JSON from the response
-      const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Failed to parse AI response');
-      }
+      result = extractJson(aiText);
+    } catch (err: any) {
+      throw new Error(`Failed to parse AI response: ${err.message}`);
     }
 
     // Save record
@@ -113,8 +95,40 @@ router.get('/history', async (req: AuthRequest, res: Response) => {
         originalSentence: r.originalSentence,
         problemAnalysis: r.problemAnalysis,
         fixedSentence: r.fixedSentence,
+        explanation: r.explanation,
+        similarExample: r.similarExample,
         createdAt: r.createdAt.toISOString()
       }))
+    });
+  } catch (err: any) {
+    res.status(500).json({ code: 500, message: err.message });
+  }
+});
+
+// Get single record (供 history 列表点击回看)
+router.get('/records/:id', async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+    const prisma = getPrisma();
+
+    const r = await prisma.sentenceFixRecord.findFirst({ where: { id, userId } });
+    if (!r) {
+      res.status(404).json({ code: 404, message: 'Record not found' });
+      return;
+    }
+
+    res.json({
+      code: 0,
+      data: {
+        id: r.id,
+        originalSentence: r.originalSentence,
+        problemAnalysis: r.problemAnalysis,
+        fixedSentence: r.fixedSentence,
+        explanation: r.explanation,
+        similarExample: r.similarExample,
+        createdAt: r.createdAt.toISOString()
+      }
     });
   } catch (err: any) {
     res.status(500).json({ code: 500, message: err.message });

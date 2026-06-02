@@ -55,6 +55,33 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// Get favorites list
+router.get('/favorites/list', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const prisma = getPrisma();
+
+    const favorites = await prisma.materialFavorite.findMany({
+      where: { userId },
+      include: { material: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({
+      code: 0,
+      data: favorites.map(f => ({
+        id: f.material.id,
+        title: f.material.title,
+        category: f.material.category,
+        tags: JSON.parse(f.material.tags),
+        sampleParagraph: f.material.sampleParagraph
+      }))
+    });
+  } catch (err: any) {
+    res.status(500).json({ code: 500, message: err.message });
+  }
+});
+
 // Get material detail
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   try {
@@ -132,33 +159,6 @@ router.post('/:id/favorite', async (req: AuthRequest, res: Response) => {
       });
       res.json({ code: 0, data: { isFavorited: true } });
     }
-  } catch (err: any) {
-    res.status(500).json({ code: 500, message: err.message });
-  }
-});
-
-// Get favorites list
-router.get('/favorites/list', async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId!;
-    const prisma = getPrisma();
-
-    const favorites = await prisma.materialFavorite.findMany({
-      where: { userId },
-      include: { material: true },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    res.json({
-      code: 0,
-      data: favorites.map(f => ({
-        id: f.material.id,
-        title: f.material.title,
-        category: f.material.category,
-        tags: JSON.parse(f.material.tags),
-        sampleParagraph: f.material.sampleParagraph
-      }))
-    });
   } catch (err: any) {
     res.status(500).json({ code: 500, message: err.message });
   }

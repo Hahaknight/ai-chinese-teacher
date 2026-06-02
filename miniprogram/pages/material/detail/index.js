@@ -1,3 +1,5 @@
+const { request } = require('../../../utils/request');
+
 Page({
   data: {
     id: '',
@@ -10,20 +12,11 @@ Page({
   },
 
   loadMaterialDetail() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/materials/${this.data.id}`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ material: res.data.data });
-        } else {
-          wx.showToast({ title: '加载失败', icon: 'none' });
-        }
-      }
-    });
+    request({ url: `/materials/${this.data.id}`, hideLoading: true })
+      .then(res => {
+        this.setData({ material: res.data });
+      })
+      .catch(() => {});
   },
 
   copyParagraph() {
@@ -36,24 +29,17 @@ Page({
   },
 
   toggleFavorite() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/materials/${this.data.id}/favorite`,
-      method: 'POST',
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({
-            'material.isFavorited': res.data.data.isFavorited
-          });
-          wx.showToast({
-            title: res.data.data.isFavorited ? '已收藏' : '已取消',
-            icon: 'success'
-          });
-        }
-      }
-    });
+    request({
+      url: `/materials/${this.data.id}/favorite`,
+      method: 'POST'
+    })
+      .then(res => {
+        this.setData({ 'material.isFavorited': res.data.isFavorited });
+        wx.showToast({
+          title: res.data.isFavorited ? '已收藏' : '已取消',
+          icon: 'success'
+        });
+      })
+      .catch(() => {});
   }
 });

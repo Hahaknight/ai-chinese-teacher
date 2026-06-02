@@ -1,7 +1,11 @@
+const { request } = require('../../../utils/request');
+const { MATERIAL_CATEGORIES } = require('../../../utils/config');
+
 Page({
   data: {
     keyword: '',
     selectedCategory: '全部',
+    categories: ['全部'].concat(MATERIAL_CATEGORIES),
     materials: [],
     loading: false
   },
@@ -17,29 +21,19 @@ Page({
   loadMaterials() {
     this.setData({ loading: true });
 
-    const app = getApp();
-    const token = wx.getStorageSync('token');
     const { keyword, selectedCategory } = this.data;
+    const params = [];
+    if (keyword) params.push(`keyword=${encodeURIComponent(keyword)}`);
+    if (selectedCategory !== '全部') params.push(`category=${encodeURIComponent(selectedCategory)}`);
+    const url = params.length ? `/materials?${params.join('&')}` : '/materials';
 
-    let url = `${app.globalData.baseUrl}/materials`;
-    if (keyword || selectedCategory !== '全部') {
-      url += `?keyword=${encodeURIComponent(keyword)}&category=${encodeURIComponent(selectedCategory)}`;
-    }
-
-    wx.request({
-      url,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
+    request({ url, hideLoading: true })
+      .then(res => {
+        this.setData({ materials: res.data || [], loading: false });
+      })
+      .catch(() => {
         this.setData({ loading: false });
-        if (res.data.code === 0) {
-          this.setData({ materials: res.data.data });
-        }
-      },
-      fail: () => {
-        this.setData({ loading: false });
-        wx.showToast({ title: '加载失败', icon: 'none' });
-      }
-    });
+      });
   },
 
   onKeywordInput(e) {

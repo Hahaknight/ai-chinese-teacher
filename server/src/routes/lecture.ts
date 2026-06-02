@@ -1,8 +1,9 @@
 import { Router, Response } from 'express';
 import { getPrisma } from '../utils/db';
 import { authMiddleware, AuthRequest } from '../middlewares/auth';
-import Anthropic from '@anthropic-ai/sdk';
+import { createMessage, extractJson } from '../utils/ai';
 import { generateLectureReviewDocx } from '../utils/docx';
+import { saveFileToLocal, toPublicFileUrl } from '../routes/file';
 
 const router = Router();
 router.use(authMiddleware);
@@ -57,36 +58,29 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     };
 
     // Call AI to generate lecture review
-    const anthropic = new Anthropic();
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241107',
-      max_tokens: 4096,
-      messages: [{
-        role: 'user',
-        content: `你是一名经验丰富的语文作文讲评课老师。
-
-请基于以下作文批改批次结果生成讲评课方案：
-
-作文主题：${summaryData.essayTopic}
-批改人数：${summaryData.totalCount} 人
-成功人数：${summaryData.successCount} 人
-平均分：${avgScore} 分
-
-学生作文结果汇总：
-${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
-
-要求：
+    const systemPrompt = `你是一名经验丰富的语文作文讲评课老师。基于学生作文批改结果生成讲评课方案。
+要求:
 1. 内容要适合老师课堂讲解
-2. 重点提炼共性问题，不要逐个点评学生
+2. 重点提炼共性问题,不要逐个点评学生
 3. 优秀表达可以做匿名化展示
 4. 课堂练习要可操作、有针对性
 5. 语言要清晰、有教学感
-6. 输出严格 JSON，不要输出 Markdown
+6. 严格输出 JSON,不要输出 Markdown`;
 
-返回格式：
+    const userPrompt = `请基于以下作文批改批次结果生成讲评课方案:
+
+作文主题:${summaryData.essayTopic}
+批改人数:${summaryData.totalCount} 人
+成功人数:${summaryData.successCount} 人
+平均分:${avgScore} 分
+
+学生作文结果汇总:
+${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
+
+返回格式:
 {
   "title": "讲评课标题",
-  "overallSituation": "整体情况概述（100-150字）",
+  "overallSituation": "整体情况概述(100-150字)",
   "mainStrengths": ["主要优点1", "主要优点2", "主要优点3"],
   "commonProblems": ["共性问题1", "共性问题2", "共性问题3"],
   "typicalProblemExplanation": [
@@ -97,25 +91,19 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
     {"exercise": "练习题", "guide": "修改引导", "answer": "参考答案"}
   ],
   "afterClassSuggestions": ["课后建议1", "课后建议2"]
-}`
-      }]
-    });
+}`;
 
-    const content = response.content[0];
-    if (content.type !== 'text') {
-      throw new Error('Invalid response from AI');
-    }
+    const aiText = await createMessage({
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      maxTokens: 4096
+    });
 
     let lectureData;
     try {
-      lectureData = JSON.parse(content.text);
-    } catch {
-      const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        lectureData = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Failed to parse AI response');
-      }
+      lectureData = extractJson(aiText);
+    } catch (err: any) {
+      throw new Error(`Failed to parse AI response: ${err.message}`);
     }
 
     // Create lecture review record
@@ -129,10 +117,27 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
     });
 
     // Generate Word document
+    let wordUrl = null;
+    let fileSize = 0;
     try {
       const docxBuffer = await generateLectureReviewDocx(lectureData, batch.batchName);
-      // In production, upload to COS and save URL
-      lecture.wordUrl = '/files/lecture_' + lecture.id + '.docx';
+      fileSize = docxBuffer.length;
+      wordUrl = await saveFileToLocal(`lecture_${lecture.id}`, docxBuffer, 'docx');
+      await prisma.lectureReview.update({
+        where: { id: lecture.id },
+        data: { wordUrl }
+      });
+      await prisma.generatedFile.create({
+        data: {
+          userId,
+          sourceType: 'lecture_review',
+          sourceId: lecture.id,
+          fileName: `${lecture.title}.docx`,
+          fileType: 'docx',
+          fileUrl: wordUrl,
+          fileSize
+        }
+      });
     } catch (err) {
       console.error('Failed to generate docx:', err);
     }
@@ -143,7 +148,7 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
         id: lecture.id,
         title: lecture.title,
         content: lectureData,
-        wordUrl: lecture.wordUrl,
+        wordUrl,
         pdfUrl: lecture.pdfUrl
       }
     });
@@ -171,8 +176,8 @@ router.get('/', async (req: AuthRequest, res: Response) => {
         id: l.id,
         batchId: l.batchId,
         title: l.title,
-        wordUrl: l.wordUrl,
-        pdfUrl: l.pdfUrl,
+        wordUrl: toPublicFileUrl(l.wordUrl, req),
+        pdfUrl: toPublicFileUrl(l.pdfUrl, req),
         createdAt: l.createdAt.toISOString()
       }))
     });
@@ -204,8 +209,8 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
         batchId: lecture.batchId,
         title: lecture.title,
         content: JSON.parse(lecture.content),
-        wordUrl: lecture.wordUrl,
-        pdfUrl: lecture.pdfUrl,
+        wordUrl: toPublicFileUrl(lecture.wordUrl, req),
+        pdfUrl: toPublicFileUrl(lecture.pdfUrl, req),
         createdAt: lecture.createdAt.toISOString()
       }
     });

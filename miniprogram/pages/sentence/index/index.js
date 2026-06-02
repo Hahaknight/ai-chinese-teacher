@@ -1,8 +1,38 @@
+const { request } = require('../../../utils/request');
+
 Page({
   data: {
     sentence: '',
     result: null,
-    loading: false
+    loading: false,
+    recordId: ''
+  },
+
+  onLoad(options) {
+    if (options && options.recordId) {
+      this.setData({ recordId: options.recordId });
+      this.loadRecord(options.recordId);
+    }
+  },
+
+  loadRecord(recordId) {
+    request({ url: `/sentence-fix/records/${recordId}`, hideLoading: true })
+      .then(res => {
+        const r = res.data || {};
+        this.setData({
+          sentence: r.originalSentence || '',
+          result: {
+            originalSentence: r.originalSentence,
+            problemAnalysis: r.problemAnalysis,
+            fixedSentence: r.fixedSentence,
+            explanation: r.explanation,
+            similarExample: r.similarExample
+          }
+        });
+      })
+      .catch(() => {
+        wx.showToast({ title: '记录加载失败', icon: 'none' });
+      });
   },
 
   onSentenceInput(e) {
@@ -18,28 +48,17 @@ Page({
     }
 
     this.setData({ loading: true });
-
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/sentence-fix`,
+    request({
+      url: '/sentence-fix',
       method: 'POST',
-      header: { Authorization: `Bearer ${token}` },
-      data: { sentence },
-      success: res => {
+      data: { sentence }
+    })
+      .then(res => {
+        this.setData({ result: res.data, loading: false });
+      })
+      .catch(() => {
         this.setData({ loading: false });
-        if (res.data.code === 0) {
-          this.setData({ result: res.data.data });
-        } else {
-          wx.showToast({ title: res.data.message || '处理失败', icon: 'none' });
-        }
-      },
-      fail: () => {
-        this.setData({ loading: false });
-        wx.showToast({ title: '网络错误', icon: 'none' });
-      }
-    });
+      });
   },
 
   copyResult() {

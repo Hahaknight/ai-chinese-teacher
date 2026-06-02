@@ -1,3 +1,7 @@
+const { request } = require('../../utils/request');
+const { BATCH_STATUS } = require('../../utils/config');
+const { formatFileSize, formatDateShort } = require('../../utils/format');
+
 Page({
   data: {
     recentBatches: [],
@@ -13,30 +17,26 @@ Page({
   },
 
   loadRecentData() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
+    request({ url: '/essay-batches/recent', hideLoading: true })
+      .then(res => {
+        const recentBatches = (res.data || []).map(b => ({
+          ...b,
+          statusText: BATCH_STATUS[b.status] || b.status
+        }));
+        this.setData({ recentBatches });
+      })
+      .catch(() => {});
 
-    // 获取最近批次
-    wx.request({
-      url: `${app.globalData.baseUrl}/essay-batches/recent`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ recentBatches: res.data.data || [] });
-        }
-      }
-    });
-
-    // 获取最近文件
-    wx.request({
-      url: `${app.globalData.baseUrl}/files/recent`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ recentFiles: res.data.data || [] });
-        }
-      }
-    });
+    request({ url: '/files/recent', hideLoading: true })
+      .then(res => {
+        const recentFiles = (res.data || []).map(f => ({
+          ...f,
+          fileSizeText: formatFileSize(f.fileSize),
+          createdAtText: formatDateShort(f.createdAt)
+        }));
+        this.setData({ recentFiles });
+      })
+      .catch(() => {});
   },
 
   goToEssayCorrection() {

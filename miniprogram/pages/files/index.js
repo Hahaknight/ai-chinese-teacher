@@ -1,3 +1,6 @@
+const { request } = require('../../utils/request');
+const { formatFileSize, formatDateShort } = require('../../utils/format');
+
 Page({
   data: {
     filterType: 'all',
@@ -13,24 +16,19 @@ Page({
   },
 
   loadFiles() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
     const { filterType } = this.data;
+    const url = filterType === 'all' ? '/files' : `/files?type=${filterType}`;
 
-    let url = `${app.globalData.baseUrl}/files`;
-    if (filterType !== 'all') {
-      url += `?type=${filterType}`;
-    }
-
-    wx.request({
-      url,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ files: res.data.data });
-        }
-      }
-    });
+    request({ url, hideLoading: true })
+      .then(res => {
+        const files = (res.data || []).map(f => ({
+          ...f,
+          fileSizeText: formatFileSize(f.fileSize),
+          createdAtText: formatDateShort(f.createdAt)
+        }));
+        this.setData({ files });
+      })
+      .catch(() => {});
   },
 
   setFilter(e) {

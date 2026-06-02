@@ -1,3 +1,5 @@
+const { request } = require('../../../utils/request');
+
 Page({
   data: {
     id: '',
@@ -10,25 +12,17 @@ Page({
   },
 
   loadLectureDetail() {
-    const app = getApp();
-    const token = wx.getStorageSync('token');
-
-    wx.request({
-      url: `${app.globalData.baseUrl}/lecture-reviews/${this.data.id}`,
-      header: { Authorization: `Bearer ${token}` },
-      success: res => {
-        if (res.data.code === 0) {
-          this.setData({ lecture: res.data.data });
-        } else {
-          wx.showToast({ title: '加载失败', icon: 'none' });
-        }
-      }
-    });
+    request({ url: `/lecture-reviews/${this.data.id}`, hideLoading: true })
+      .then(res => {
+        this.setData({ lecture: res.data });
+      })
+      .catch(() => {});
   },
 
   copyAll() {
     const { lecture } = this.data;
     const content = lecture.content;
+    if (!content) return;
 
     let text = `${lecture.title}\n\n`;
     text += `一、本次作文整体情况\n${content.overallSituation}\n\n`;
@@ -48,46 +42,29 @@ Page({
   },
 
   exportWord() {
-    const wordUrl = this.data.lecture.wordUrl;
-    if (wordUrl) {
-      wx.showLoading({ title: '下载中...' });
-      wx.downloadFile({
-        url: wordUrl,
-        success: res => {
-          wx.hideLoading();
-          wx.openDocument({
-            filePath: res.tempFilePath,
-            success: () => console.log('打开成功'),
-            fail: () => wx.showToast({ title: '打开失败', icon: 'none' })
-          });
-        },
-        fail: () => {
-          wx.hideLoading();
-          wx.showToast({ title: '下载失败', icon: 'none' });
-        }
-      });
-    }
+    this._downloadAndOpen(this.data.lecture.wordUrl);
   },
 
   exportPDF() {
-    const pdfUrl = this.data.lecture.pdfUrl;
-    if (pdfUrl) {
-      wx.showLoading({ title: '下载中...' });
-      wx.downloadFile({
-        url: pdfUrl,
-        success: res => {
-          wx.hideLoading();
-          wx.openDocument({
-            filePath: res.tempFilePath,
-            success: () => console.log('打开成功'),
-            fail: () => wx.showToast({ title: '打开失败', icon: 'none' })
-          });
-        },
-        fail: () => {
-          wx.hideLoading();
-          wx.showToast({ title: '下载失败', icon: 'none' });
-        }
-      });
-    }
+    this._downloadAndOpen(this.data.lecture.pdfUrl);
+  },
+
+  _downloadAndOpen(url) {
+    if (!url) return;
+    wx.showLoading({ title: '下载中...' });
+    wx.downloadFile({
+      url,
+      success: res => {
+        wx.hideLoading();
+        wx.openDocument({
+          filePath: res.tempFilePath,
+          fail: () => wx.showToast({ title: '打开失败', icon: 'none' })
+        });
+      },
+      fail: () => {
+        wx.hideLoading();
+        wx.showToast({ title: '下载失败', icon: 'none' });
+      }
+    });
   }
 });
