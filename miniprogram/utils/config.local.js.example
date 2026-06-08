@@ -1,0 +1,20 @@
+// 真机调试配置(可选)
+// 真机扫码时,小程序需要通过局域网 IP 访问本地 dev server,127.0.0.1 在手机上不通
+//
+// 步骤:
+// 1. 复制本文件为 config.local.js(同一目录下):
+//      cp miniprogram/utils/config.local.js.example miniprogram/utils/config.local.js
+// 2. 把你电脑在局域网中的 IP 填到下面(命令行 ipconfig / ifconfig 查 "IPv4 地址")
+//    例如开发机 IP 是 192.168.1.100,后端跑在 3000 端口,API 前缀是 /api:
+//      module.exports = { BASE_URL: 'http://192.168.1.100:3000/api' };
+// 3. config.local.js 已被 .gitignore 忽略,不会被提交
+// 4. 重新编译小程序,真机扫码即可联调
+//
+// 注意:
+// - 后端 server/.env 里 CORS_ORIGIN / HOST 也得放行该 IP,否则请求会被浏览器同源策略拒
+// - 手机和电脑必须在同一个 Wi-Fi / 局域网
+// - 切换不同网络时记得回来改 IP
+
+module.exports = {
+  // BASE_URL: 'http://192.168.1.100:3000/api'
+};

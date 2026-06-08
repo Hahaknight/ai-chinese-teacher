@@ -1,11 +1,13 @@
 const { request } = require('../../utils/request');
-const { BATCH_STATUS } = require('../../utils/config');
+const { BATCH_STATUS, BASE_URL, IS_REMOTE_HOST } = require('../../utils/config');
 const { formatFileSize, formatDateShort } = require('../../utils/format');
 
 Page({
   data: {
     recentBatches: [],
-    recentFiles: []
+    recentFiles: [],
+    showRemoteBanner: IS_REMOTE_HOST,
+    baseUrlHint: BASE_URL
   },
 
   onLoad() {
@@ -80,6 +82,13 @@ Page({
         wx.hideLoading();
         wx.showToast({ title: '下载失败', icon: 'none' });
       }
+    });
+  },
+
+  copyBaseUrl() {
+    wx.setClipboardData({
+      data: BASE_URL,
+      success: () => wx.showToast({ title: '已复制', icon: 'success' })
     });
   }
 });

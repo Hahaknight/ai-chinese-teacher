@@ -1,4 +1,11 @@
 <view class="container">
+  <!-- 真机扫码提示(baseUrl 指向局域网 IP 时展示) -->
+  <view class="remote-banner" wx:if="{{showRemoteBanner}}" bindtap="copyBaseUrl">
+    <view class="remote-banner-title">📶 真机调试已启用</view>
+    <view class="remote-banner-desc">当前 API: {{baseUrlHint}}</view>
+    <view class="remote-banner-tip">点击复制 · 手机和电脑需在同一 Wi-Fi</view>
+  </view>
+
   <!-- 工具入口 -->
   <view class="card">
     <view class="card-title">工具入口</view>

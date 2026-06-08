@@ -2,7 +2,7 @@
   <!-- 批次信息 -->
   <view class="batch-info card">
     <view class="batch-name">{{batch.batchName}}</view>
-    <view class="batch-status {{batch.status === 'completed' ? 'status-completed' : batch.status === 'processing' ? 'status-processing' : batch.status === 'partial' ? 'status-partial' : batch.status === 'failed' ? 'status-failed' : 'status-pending'}}">{{batch.statusText || statusText}}</view>
+    <status-badge status="{{batch.status}}" text="{{batch.statusText || statusText}}" />
   </view>
 
   <!-- 学生列表 -->
@@ -19,8 +19,7 @@
           <view class="task-meta">{{item.imageCount}} 张图片 · {{item.statusText}}</view>
         </view>
         <view class="task-score" wx:if="{{item.score !== null}}">
-          <text class="score-num">{{item.score}}</text>
-          <text class="score-total">/{{item.fullScore}}</text>
+          <score-display score="{{item.score}}" full-score="{{item.fullScore}}" />
         </view>
         <view class="task-arrow" wx:if="{{item.status === 'success'}}">›</view>
         <view class="task-retry" wx:if="{{item.status === 'failed'}}" catchtap="retryTask" data-id="{{item.id}}">重新</view>

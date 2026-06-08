@@ -1,3 +1,5 @@
+const { BASE_URL } = require('./utils/config');
+
 App({
   onLaunch() {
     // 展示本地存储能力
@@ -12,7 +14,7 @@ App({
   globalData: {
     userInfo: null,
     token: null,
-    baseUrl: 'http://127.0.0.1:3000/api'
+    baseUrl: BASE_URL
   },
 
   login() {

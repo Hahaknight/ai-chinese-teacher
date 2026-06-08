@@ -4,6 +4,7 @@ import { authMiddleware, AuthRequest } from '../middlewares/auth';
 import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
+import { logger } from '../utils/logger';
 
 const router = Router();
 router.use(authMiddleware);
@@ -33,25 +34,53 @@ const upload = multer({
   }
 });
 
+// 安全开关:只有显式声明 TRUST_PROXY=1 时,才把 X-Forwarded-Proto / Host 当作可信来源
+// 默认关闭 —— 否则任何客户端都可以通过伪造 Host 头让返回的 fileUrl 指向恶意域名
+function isProxyTrusted(): boolean {
+  return process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true';
+}
+
 function getBaseUrl(req?: AuthRequest): string {
   const configured = process.env.PUBLIC_BASE_URL || process.env.SERVER_PUBLIC_URL;
   if (configured) {
     return configured.replace(/\/api$/, '').replace(/\/$/, '');
   }
 
-  if (req) {
+  if (req && isProxyTrusted()) {
     const forwardedProto = req.headers['x-forwarded-proto'];
     const proto = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || req.protocol;
     return `${proto}://${req.get('host')}`;
   }
 
+  // 未配置 PUBLIC_BASE_URL 且未声明 TRUST_PROXY,回退到 localhost
+  // 这种情况下 fileUrl 里的 host 仍然是 localhost,真机扫码会访问不到 —— 用户应配置 PUBLIC_BASE_URL
+  if (req && !isProxyTrusted() && (req.headers['x-forwarded-proto'] || req.headers.host)) {
+    logger.debug(
+      { host: req.headers.host, forwardedProto: req.headers['x-forwarded-proto'] },
+      '[file] toPublicFileUrl 忽略代理头:未设置 TRUST_PROXY=1,如已部署反代请在 .env 显式声明'
+    );
+  }
   return `http://localhost:${process.env.PORT || 3000}`;
 }
 
 export function toPublicFileUrl(filePathOrUrl: string | null, req?: AuthRequest): string | null {
   if (!filePathOrUrl) return null;
   if (/^https?:\/\//i.test(filePathOrUrl)) return filePathOrUrl;
+
+  // 拒绝任何 protocol-relative URL(`//evil.com/x`)或反斜杠变体,防止被解释为外域
+  if (/^\/\/|^\\\\/.test(filePathOrUrl)) {
+    logger.warn({ filePathOrUrl }, '[file] toPublicFileUrl 拒绝可疑路径');
+    return null;
+  }
+
   const normalizedPath = filePathOrUrl.startsWith('/') ? filePathOrUrl : `/${filePathOrUrl}`;
+
+  // 路径里禁止出现 `..` 段(防 path traversal,虽然这里只是拼成 URL 不会直接读盘,但留着是为了不让数据库被投毒)
+  if (normalizedPath.split('/').some(seg => seg === '..')) {
+    logger.warn({ normalizedPath }, '[file] toPublicFileUrl 拒绝包含 .. 的路径');
+    return null;
+  }
+
   return `${getBaseUrl(req)}${normalizedPath}`;
 }
 

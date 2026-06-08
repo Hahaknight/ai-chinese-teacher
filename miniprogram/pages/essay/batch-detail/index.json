@@ -1,4 +1,7 @@
 {
-  "usingComponents": {},
+  "usingComponents": {
+    "status-badge": "/components/status-badge/index",
+    "score-display": "/components/score-display/index"
+  },
   "navigationBarTitleText": "批次详情"
 }

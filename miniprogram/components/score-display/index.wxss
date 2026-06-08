@@ -1,0 +1,29 @@
+.score-wrap {
+  display: inline-block;
+}
+
+.score-num {
+  font-weight: 600;
+  color: #0082FF;
+}
+
+.score-total {
+  color: #999;
+  margin-left: 4rpx;
+}
+
+.score-normal .score-num {
+  font-size: 36rpx;
+}
+
+.score-normal .score-total {
+  font-size: 24rpx;
+}
+
+.score-large .score-num {
+  font-size: 64rpx;
+}
+
+.score-large .score-total {
+  font-size: 32rpx;
+}

@@ -6,6 +6,8 @@ import path from 'path';
 import { initDatabase } from './utils/db';
 import { closeBrowser } from './utils/pdf';
 import { startCleanupSchedule, stopCleanupSchedule } from './utils/cleanup';
+import { logger } from './utils/logger';
+import { requestIdMiddleware } from './middlewares/requestId';
 import authRoutes from './routes/auth';
 import essayRoutes from './routes/essay';
 import sentenceRoutes from './routes/sentence';
@@ -18,8 +20,17 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
+
+// 显式声明 TRUST_PROXY 时,让 express 信任代理转发的 X-Forwarded-* / Host
+// 不声明就保持 false —— 否则任何客户端都能伪造 host 头影响 toPublicFileUrl 等
+if (process.env.TRUST_PROXY === '1' || process.env.TRUST_PROXY === 'true') {
+  app.set('trust proxy', true);
+  logger.info('trust proxy enabled (TRUST_PROXY=1)');
+}
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(requestIdMiddleware);
 
 // Serve uploaded files locally
 app.use('/uploads', express.static(UPLOAD_DIR));
@@ -39,7 +50,7 @@ app.get('/api/health', (req, res) => {
 
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
+  logger.error({ err: err.message, stack: err.stack, path: req.path }, 'unhandled error');
   res.status(500).json({ code: 500, message: err.message || 'Internal server error' });
 });
 
@@ -48,7 +59,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 initDatabase().then(() => {
   const server = app.listen(Number(PORT), HOST, () => {
-    console.log(`Server is running on http://${HOST}:${PORT}`);
+    logger.info({ host: HOST, port: PORT }, `Server is running on http://${HOST}:${PORT}`);
   });
 
   // 启动文件清理调度:temp 1 天前 / uploads 7 天前孤儿
@@ -57,16 +68,16 @@ initDatabase().then(() => {
 
   // 进程退出时关 puppeteer browser,避免 chromium 孤儿进程
   const shutdown = async (signal: string) => {
-    console.log(`\n${signal} received, shutting down...`);
+    logger.info({ signal }, `${signal} received, shutting down...`);
     stopCleanupSchedule();
-    server.close(() => console.log('HTTP server closed'));
+    server.close(() => logger.info('HTTP server closed'));
     await closeBrowser().catch(() => {});
     process.exit(0);
   };
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
 }).catch(err => {
-  console.error('Failed to initialize database:', err);
+  logger.fatal({ err: err.message }, 'Failed to initialize database');
   process.exit(1);
 });
 

@@ -1,0 +1,16 @@
+<view class="badge {{
+  status === 'completed' || status === 'success' ? 'badge-completed' :
+  status === 'processing' ? 'badge-processing' :
+  status === 'partial' ? 'badge-partial' :
+  status === 'failed' ? 'badge-failed' :
+  'badge-pending'
+}}">{{
+  text || (
+    status === 'completed' ? '已完成' :
+    status === 'processing' ? '批改中' :
+    status === 'partial' ? '部分完成' :
+    status === 'failed' ? '批改失败' :
+    status === 'success' ? '成功' :
+    '待批改'
+  )
+}}</view>

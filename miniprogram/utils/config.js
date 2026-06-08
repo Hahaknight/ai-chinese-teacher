@@ -1,20 +1,27 @@
 // 集中管理 baseUrl、状态文案、分类等常量
-// 真机调试时请把下面的 host 改成你电脑在局域网中的 IP(如 http://192.168.1.100:3000/api)
+// 真机调试时不要直接改本文件,请创建 config.local.js(本目录)覆盖 BASE_URL
+// 详见 config.local.js.example
 
-function getBaseUrl() {
+const path = './config.local.js';
+
+function readLocalOverride() {
   try {
-    const app = getApp();
-    if (app && app.globalData && app.globalData.baseUrl) {
-      return app.globalData.baseUrl;
-    }
+    return require(path) || {};
   } catch (e) {
-    // getApp() 在 App() 之外调用会抛错,这里兜底
+    return {};
   }
-  return 'http://127.0.0.1:3000/api';
 }
 
+const localOverride = readLocalOverride();
+
+const BASE_URL = localOverride.BASE_URL || 'http://127.0.0.1:3000/api';
+
 module.exports = {
-  BASE_URL: getBaseUrl(),
+  BASE_URL,
+
+  // 当前是否在真机(非 127.0.0.1 / localhost)环境
+  // 用于决定是否在首页展示"真机扫码"提示横幅
+  IS_REMOTE_HOST: !/^http:\/\/(127\.0\.0\.1|localhost):/.test(BASE_URL),
 
   // 批改状态文案
   BATCH_STATUS: {

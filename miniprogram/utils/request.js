@@ -29,6 +29,32 @@ function isLoggedIn() {
 // 通用请求 timeout(AI 批改可能跑 5 分钟,但普通 CRUD 30s 足够)
 const DEFAULT_TIMEOUT_MS = 30000;
 
+// 401 重登 modal 互斥锁 + 节流(防止多个并发请求同时弹多次 modal)
+let _reLoginModalOpen = false;
+let _lastReLoginAt = 0;
+
+function showReLoginModal() {
+  // 5 秒内已弹过,跳过(节流)
+  const now = Date.now();
+  if (_reLoginModalOpen || now - _lastReLoginAt < 5000) return;
+  _reLoginModalOpen = true;
+  _lastReLoginAt = now;
+
+  wx.showModal({
+    title: '登录已过期',
+    content: '需要重新登录后继续使用',
+    confirmText: '重新登录',
+    showCancel: false,
+    success: () => {
+      _reLoginModalOpen = false;
+      wx.reLaunch({ url: '/pages/index/index' });
+    },
+    fail: () => {
+      _reLoginModalOpen = false;
+    }
+  });
+}
+
 function request({ url, method = 'GET', data = {}, header = {}, hideLoading = false, timeoutMs } = {}) {
   return new Promise((resolve, reject) => {
     const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
@@ -54,10 +80,8 @@ function request({ url, method = 'GET', data = {}, header = {}, hideLoading = fa
 
         if (res.statusCode === 401) {
           clearToken();
-          wx.showToast({ title: '登录已过期,请重新进入', icon: 'none' });
-          setTimeout(() => {
-            wx.reLaunch({ url: '/pages/index/index' });
-          }, 1500);
+          // 改 modal 让用户主动点确认,避免在当前页 reLaunch 把进行中的批改/编辑动作冲掉
+          showReLoginModal();
           return reject({ code: 401, message: 'Unauthorized' });
         }
 

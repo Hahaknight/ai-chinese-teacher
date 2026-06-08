@@ -14,10 +14,19 @@ miniprogram/*.jpeg
 miniprogram/*.png
 miniprogram/1.jpg
 
+# 真机调试 baseUrl 覆盖(每个开发者的 LAN IP 不一样)
+miniprogram/utils/config.local.js
+
 # 后端本地运行时产物
 server/uploads/
 server/temp/
 server/dist/
+
+# 根目录运行时调试产物(AI 调试落盘、临时文件)
+temp/
+
+# dev server 日志
+server/logs/
 
 # 本地 IDE / 工具配置
 .claude/

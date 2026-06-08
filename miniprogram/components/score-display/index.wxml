@@ -1,0 +1,4 @@
+<view class="score-wrap score-{{size}}">
+  <text class="score-num">{{score}}</text>
+  <text class="score-total">/{{fullScore}}</text>
+</view>
