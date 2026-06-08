@@ -12,7 +12,10 @@
     <view wx:if="{{tasks.length > 0}}">
       <view class="task-item" wx:for="{{tasks}}" wx:key="id" bindtap="goToTask" data-id="{{item.id}}" data-status="{{item.status}}">
         <view class="task-info">
-          <view class="student-name">{{item.studentName}}</view>
+          <view class="student-name">
+            <text>{{item.studentName || '未识别'}}</text>
+            <text class="name-missing-badge" wx:if="{{item.nameMissing}}"> ?</text>
+          </view>
           <view class="task-meta">{{item.imageCount}} 张图片 · {{item.statusText}}</view>
         </view>
         <view class="task-score" wx:if="{{item.score !== null}}">

@@ -1,10 +1,31 @@
 <view class="container">
   <!-- 学生信息 -->
   <view class="student-header card">
-    <view class="student-name">{{task.studentName}}</view>
+    <view class="student-name">{{task.studentName || '未命名'}}</view>
     <view class="task-score" wx:if="{{task.score !== null}}">
       <text class="score-num">{{task.score}}</text>
       <text class="score-total">/{{task.fullScore}}分</text>
+    </view>
+  </view>
+
+  <!-- 姓名未识别:显示候选名单,点选即保存 -->
+  <view class="card name-fix-card" wx:if="{{task.nameMissing && !editingName}}">
+    <view class="section-title">⚠️ 未能识别学生姓名</view>
+    <view class="name-fix-tip">请从下方候选名中选择,或手动输入</view>
+    <view class="candidate-list" wx:if="{{task.nameCandidates.length > 0}}">
+      <view class="candidate-chip" wx:for="{{task.nameCandidates}}" wx:key="*this" bindtap="pickCandidate" data-name="{{item}}">{{item}}</view>
+    </view>
+    <view class="empty-tip" wx:else>暂无候选名,直接手动输入</view>
+    <button class="btn-default" bindtap="startCustomName">手动输入姓名</button>
+  </view>
+
+  <!-- 姓名未识别:自定义输入模式 -->
+  <view class="card name-fix-card" wx:if="{{editingName}}">
+    <view class="section-title">手动输入学生姓名</view>
+    <input class="name-input" value="{{customName}}" placeholder="请输入学生姓名" maxlength="20" bindinput="onCustomNameInput" focus="{{editingName}}" />
+    <view class="name-fix-buttons">
+      <button class="btn-default" bindtap="cancelCustomName">取消</button>
+      <button class="btn-primary" bindtap="submitCustomName">保存</button>
     </view>
   </view>
 

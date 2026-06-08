@@ -13,6 +13,9 @@ const MODEL = process.env.MINIMAX_MODEL || 'MiniMax-M3';
 const FALLBACK_MODEL = process.env.MINIMAX_FALLBACK_MODEL || 'MiniMax-M2.7';
 export { FALLBACK_MODEL };
 
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+const DEFAULT_RETRY_INTERVAL_MS = 30000;
+
 export interface ContentText {
   type: 'text';
   text: string;
@@ -47,8 +50,10 @@ export interface CreateMessageOptions {
   responseFormat?: 'json_object' | 'none';
   // 验证函数:返回 false 则触发重试(用于 M3 偶尔"忘记"按 JSON 格式输出的情况)
   validate?: (text: string) => boolean;
-  // 验证失败时的最大重试次数(默认 1)
+  // 网络/超时/AiError 失败时的最大重试次数(默认 5)
   retries?: number;
+  // 重试间隔(ms),默认 30000
+  retryIntervalMs?: number;
 }
 
 export class AiError extends Error {
@@ -113,7 +118,8 @@ export async function createMessage(opts: CreateMessageOptions): Promise<string>
   const timeoutMs = opts.timeoutMs || 180000;
   const responseFormat = opts.responseFormat;
   const validate = opts.validate;
-  const maxRetries = validate ? Math.max(0, opts.retries ?? 1) : 0;
+  const maxRetries = Math.max(0, opts.retries ?? 5);
+  const retryIntervalMs = opts.retryIntervalMs ?? DEFAULT_RETRY_INTERVAL_MS;
 
   const messages: ChatMessage[] = opts.system
     ? [{ role: 'system', content: opts.system }, ...opts.messages]
@@ -133,7 +139,8 @@ export async function createMessage(opts: CreateMessageOptions): Promise<string>
         if (validate && !validate(text)) {
           attempt += 1;
           if (attempt <= maxRetries) {
-            console.warn(`[ai] model ${modelName} validate 失败,重试 ${attempt}/${maxRetries}`);
+            console.warn(`[ai] model ${modelName} validate 失败,重试 ${attempt}/${maxRetries},${retryIntervalMs / 1000}s 后`);
+            await sleep(retryIntervalMs);
             continue;
           }
           // 重试用尽,fall through 到下一个 model
@@ -142,13 +149,19 @@ export async function createMessage(opts: CreateMessageOptions): Promise<string>
         return text;
       } catch (err: any) {
         if (err instanceof AiError && err.message.includes('retries')) {
-          // 重试用尽,跳出 while 继续下一个 model
+          // validate 重试用尽,跳出 while 继续下一个 model
           lastError = err;
           break;
         }
-        console.error(`[ai] model ${modelName} failed:`, err.message);
+        attempt += 1;
+        if (attempt <= maxRetries) {
+          console.warn(`[ai] model ${modelName} 失败(尝试 ${attempt}/${maxRetries + 1}),${retryIntervalMs / 1000}s 后重试: ${err.message}`);
+          await sleep(retryIntervalMs);
+          continue; // 重试同 model(不立即跳到 fallback,避免浪费主模型配额)
+        }
+        console.error(`[ai] model ${modelName} 重试 ${maxRetries} 次后仍失败:`, err.message);
         lastError = err;
-        break; // 网络/超时错误直接跳到下一个 model
+        break; // 重试用尽,跳到下一个 model
       }
     }
     if (modelName === FALLBACK_MODEL) break;

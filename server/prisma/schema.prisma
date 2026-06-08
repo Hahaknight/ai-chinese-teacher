@@ -51,7 +51,7 @@ model EssayTask {
   batch            EssayBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
   userId           String
   user             User     @relation(fields: [userId], references: [id])
-  studentName      String
+  studentName      String?
   imageUrls        String   // JSON array
   imageCount       Int      @default(0)
   status           String   @default("pending") // pending | processing | success | failed

@@ -189,3 +189,62 @@
 .action-buttons button {
   margin-bottom: 20rpx;
 }
+/* 姓名修复卡片 */
+.name-fix-card {
+  background-color: #fff7e6;
+  border-left: 6rpx solid #ff9500;
+}
+
+.name-fix-tip {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 20rpx;
+}
+
+.candidate-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.candidate-chip {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  background-color: #fff;
+  border: 2rpx solid #0082FF;
+  color: #0082FF;
+  border-radius: 32rpx;
+  font-size: 28rpx;
+}
+
+.candidate-chip:active {
+  background-color: #0082FF;
+  color: #fff;
+}
+
+.empty-tip {
+  font-size: 26rpx;
+  color: #999;
+  margin-bottom: 20rpx;
+}
+
+.name-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  box-sizing: border-box;
+  margin-bottom: 20rpx;
+}
+
+.name-fix-buttons {
+  display: flex;
+  gap: 20rpx;
+}
+
+.name-fix-buttons button {
+  flex: 1;
+}

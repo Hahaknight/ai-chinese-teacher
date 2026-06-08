@@ -1,6 +1,9 @@
+// 必须在所有其他 import 之前加载 .env,让 MINIMAX_API_KEY 等环境变量在模块初始化时可用
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { initDatabase } from './utils/db';
+import { closeBrowser } from './utils/pdf';
 import authRoutes from './routes/auth';
 import essayRoutes from './routes/essay';
 import sentenceRoutes from './routes/sentence';
@@ -42,9 +45,19 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const HOST = process.env.HOST || '0.0.0.0';
 
 initDatabase().then(() => {
-  app.listen(Number(PORT), HOST, () => {
+  const server = app.listen(Number(PORT), HOST, () => {
     console.log(`Server is running on http://${HOST}:${PORT}`);
   });
+
+  // 进程退出时关 puppeteer browser,避免 chromium 孤儿进程
+  const shutdown = async (signal: string) => {
+    console.log(`\n${signal} received, shutting down...`);
+    server.close(() => console.log('HTTP server closed'));
+    await closeBrowser().catch(() => {});
+    process.exit(0);
+  };
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);

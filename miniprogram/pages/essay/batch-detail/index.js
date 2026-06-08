@@ -9,6 +9,10 @@ Page({
     tasks: []
   },
 
+  // 保存轮询 interval id,onUnload 清理
+  // 避免用户切到首页/讲评课等页面后,后台还在跑 poll 请求浪费后端 + 泄漏闭包
+  _pollingInterval: null,
+
   onLoad(options) {
     this.setData({ batchId: options.id });
     this.loadBatchDetail();
@@ -16,6 +20,17 @@ Page({
 
   onShow() {
     this.loadBatchDetail();
+  },
+
+  onUnload() {
+    this._stopPolling();
+  },
+
+  _stopPolling() {
+    if (this._pollingInterval) {
+      clearInterval(this._pollingInterval);
+      this._pollingInterval = null;
+    }
   },
 
   loadBatchDetail() {
@@ -61,10 +76,13 @@ Page({
   },
 
   pollingStatus() {
+    // 防止重复启动:旧轮询先停掉
+    this._stopPolling();
+
     const startTime = Date.now();
-    const interval = setInterval(() => {
+    this._pollingInterval = setInterval(() => {
       if (Date.now() - startTime > POLLING_TIMEOUT_MS) {
-        clearInterval(interval);
+        this._stopPolling();
         wx.showToast({ title: '轮询超时,请手动刷新', icon: 'none' });
         return;
       }
@@ -80,7 +98,7 @@ Page({
           this.setData({ batch: { ...data, statusText }, tasks });
 
           if (data.status !== 'processing') {
-            clearInterval(interval);
+            this._stopPolling();
             if (data.status === 'completed') {
               wx.showToast({ title: '批改完成', icon: 'success' });
             } else if (data.status === 'partial') {

@@ -6,6 +6,18 @@ import materialsData from '../data/materials.json';
 const router = Router();
 router.use(authMiddleware);
 
+// 解析 schema 里的 JSON 字符串字段,失败兜底返回空数组
+// (Prisma sqlite 不支持原生 JSON 数组类型,只能存字符串)
+function safeJsonArray(s: string | null | undefined): string[] {
+  if (!s) return [];
+  try {
+    const parsed = JSON.parse(s);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 // Get materials list
 router.get('/', async (req: AuthRequest, res: Response) => {
   try {
@@ -31,13 +43,20 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     });
 
     // Filter by keyword if provided
+    // tags 和 suitableTopics 在 DB 里是 JSON 字符串,必须 parse 后再 includes
+    // 否则搜"坚持"会因 JSON 字符串里有"坚持"字面量而误命中相邻字
     if (keyword) {
       const kw = keyword as string;
-      materials = materials.filter(m =>
-        m.title.includes(kw) ||
-        m.tags.includes(kw) ||
-        m.suitableThemes.includes(kw)
-      );
+      materials = materials.filter(m => {
+        const tags = safeJsonArray(m.tags);
+        const topics = safeJsonArray(m.suitableTopics);
+        return (
+          m.title.includes(kw) ||
+          tags.includes(kw) ||
+          m.suitableThemes.includes(kw) ||
+          topics.includes(kw)
+        );
+      });
     }
 
     res.json({

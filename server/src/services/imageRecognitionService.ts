@@ -1,242 +1,125 @@
-// 本服务在新流程中已被 essay.service.ts 的 processEssayTaskDirect 替代
-// (直连 minimax,把图片作为 multimodal content 一次传给 AI,无需先 OCR 再调用)
-// 仅在环境变量 MINIMAX_DIRECT=0 时被调用,作为已配 uvx + minimax-coding-plan-mcp 的环境保留路径
-// TODO: 直连稳定后删除整个 MCP 子进程逻辑(预计 B 阶段第二刀)
+// 图片识别服务(2026-06 改版,直连 minimax VLM 端点)
+//
+// 调用链路:本服务 POST https://api.minimaxi.com/v1/coding_plan/vlm
+//           显式传 model=MiniMax-M2.7(M3 在 OCR 场景会幻觉补充文字,2026-06-03 实测)
+//
+// 历史:B 阶段之前走 MCP 子进程 (uvx minimax-coding-plan-mcp) 调 understand_image,
+//      有两个问题:
+//        1. 工具签名只有 prompt/image_source,没有 model 参数,无法强制 M2.7
+//        2. 协议握手格式不匹配,框架返回 "Invalid request parameters"
+//      改直连后两个问题都解决,且无子进程开销。
+//
+// 配套:app.ts 顶部 import 'dotenv/config' 让 MINIMAX_API_KEY 在 process.env 可用
+//       (tsx watch 不自动加载 .env)
 
-import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 import axios from 'axios';
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || '';
-const MCP_SERVER_SCRIPT = 'minimax-coding-plan-mcp';
+const API_KEY = process.env.MINIMAX_API_KEY || process.env.ANTHROPIC_API_KEY || '';
+const VLM_URL =
+  (process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/v1') + '/coding_plan/vlm';
+const OCR_MODEL = 'MiniMax-M2.7';
 
-interface MCPRequest {
-  jsonrpc: '2.0';
-  id: number;
-  method: string;
-  params?: {
-    name?: string;
-    arguments?: Record<string, string>;
-  };
+const DEFAULT_TIMEOUT_MS = 120000;        // 单次超时 2 分钟
+const DEFAULT_RETRIES = 3;                  // 失败重试 3 次
+const DEFAULT_RETRY_INTERVAL_MS = 10000;   // 重试间隔 10 秒
+
+export interface RecognizeOptions {
+  prompt?: string;
+  retries?: number;
+  retryIntervalMs?: number;
+  timeoutMs?: number;
 }
 
-interface MCPResponse {
-  jsonrpc: '2.0';
-  id: number;
-  result?: {
-    content?: Array<{ type: string; text?: string }>;
-  };
-  error?: {
-    code: number;
-    message: string;
-  };
+const DEFAULT_PROMPT =
+  '请按以下顺序仔细识别图片中的文字:\n' +
+  '1. 【优先级最高】图片顶部的姓名/班级/学号信息(通常位于"语文 答题卡"等字样附近,可能是手写,字迹可能模糊,务必仔细辨认,常见姓名 2-4 个汉字)\n' +
+  '2. 作文标题\n' +
+  '3. 作文正文\n\n' +
+  '要求:\n' +
+  '- 按原文一字不改地输出,保留段落、标点和换行\n' +
+  '- 看不清的字用 [?] 标记,不要猜测\n' +
+  '- 只输出识别到的文字,不要输出思考过程、解释或 Markdown 标记';
+
+function detectImageFormat(imagePath: string): 'jpeg' | 'png' | 'webp' {
+  const lower = imagePath.toLowerCase();
+  if (lower.endsWith('.png')) return 'png';
+  if (lower.endsWith('.webp')) return 'webp';
+  return 'jpeg';
 }
 
-class MCPProcess {
-  private process: ChildProcess | null = null;
-  private requestId = 1;
-  private pendingRequests = new Map<number, { resolve: (value: any) => void; reject: (error: any) => void; timeout: NodeJS.Timeout }>();
-  private initTimeout: NodeJS.Timeout | null = null;
-  private isInitialized = false;
-
-  async initialize(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      // Start the MCP server process using uvx
-      this.process = spawn('uvx', [MCP_SERVER_SCRIPT], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env }
-      });
-
-      let stdoutBuffer = '';
-      let stderrOutput = '';
-
-      this.process.stdout?.on('data', (data: Buffer) => {
-        stdoutBuffer += data.toString();
-        this.processResponse(stdoutBuffer);
-      });
-
-      this.process.stderr?.on('data', (data: Buffer) => {
-        stderrOutput += data.toString();
-      });
-
-      this.process.on('error', (err) => {
-        console.error('MCP process error:', err);
-        reject(err);
-      });
-
-      this.process.on('exit', (code) => {
-        console.log(`MCP process exited with code ${code}`);
-        this.isInitialized = false;
-      });
-
-      // Initialize timeout (2 minutes)
-      this.initTimeout = setTimeout(() => {
-        this.kill();
-        reject(new Error('MCP initialization timeout'));
-      }, 120000);
-
-      // Send initialize request
-      const initPromise = this.sendRequest('initialize', {
-        arguments: { api_key: ANTHROPIC_API_KEY }
-      });
-
-      initPromise.then((result) => {
-        if (this.initTimeout) {
-          clearTimeout(this.initTimeout);
-          this.initTimeout = null;
-        }
-        this.isInitialized = true;
-        resolve(result);
-      }).catch(reject);
-
-      // Also need to send "initialized" notification back
-      setTimeout(() => {
-        this.sendNotification('initialized', {});
-      }, 1000);
-    });
+export async function recognizeImage(
+  imagePath: string,
+  options: RecognizeOptions = {}
+): Promise<string> {
+  if (!API_KEY) {
+    throw new Error('MINIMAX_API_KEY not configured (check .env)');
+  }
+  if (!fs.existsSync(imagePath)) {
+    throw new Error(`Image file not found: ${imagePath}`);
   }
 
-  private processResponse(buffer: string) {
-    const lines = buffer.split('\n');
-    let remaining = '';
+  const prompt = options.prompt ?? DEFAULT_PROMPT;
+  const maxRetries = Math.max(1, options.retries ?? DEFAULT_RETRIES);
+  const retryIntervalMs = options.retryIntervalMs ?? DEFAULT_RETRY_INTERVAL_MS;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-    for (const line of lines) {
-      if (!line.trim()) continue;
+  // 一次性读图 + base64(7MB 图 → ~10MB 字符串,axios body limit 需要放宽)
+  const imageBuffer = fs.readFileSync(imagePath);
+  const base64 = imageBuffer.toString('base64');
+  const format = detectImageFormat(imagePath);
+  const imageUrl = `data:image/${format};base64,${base64}`;
+  const payloadSizeMB = (Buffer.byteLength(imageUrl) / 1024 / 1024).toFixed(2);
+  console.log(`[VLM] ${imagePath} size=${imageBuffer.length}B base64=${payloadSizeMB}MB model=${OCR_MODEL}`);
 
-      try {
-        const response: MCPResponse = JSON.parse(line);
-        if (response.id) {
-          const pending = this.pendingRequests.get(response.id);
-          if (pending) {
-            clearTimeout(pending.timeout);
-            this.pendingRequests.delete(response.id);
-            if (response.error) {
-              pending.reject(new Error(response.error.message));
-            } else {
-              pending.resolve(response);
-            }
-          }
-        }
-      } catch {
-        // Not complete JSON yet, keep buffering
-        remaining = line;
-      }
-    }
-  }
-
-  private sendRequest(method: string, params?: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      if (!this.process?.stdin) {
-        reject(new Error('MCP process not running'));
-        return;
-      }
-
-      const id = this.requestId++;
-      const request: MCPRequest = {
-        jsonrpc: '2.0',
-        id,
-        method,
-        params
-      };
-
-      const timeout = setTimeout(() => {
-        this.pendingRequests.delete(id);
-        reject(new Error('MCP request timeout'));
-      }, 300000); // 5 minutes
-
-      this.pendingRequests.set(id, { resolve, reject, timeout });
-
-      this.process.stdin.write(JSON.stringify(request) + '\n');
-    });
-  }
-
-  private sendNotification(method: string, params?: any) {
-    if (!this.process?.stdin) return;
-
-    const notification = {
-      jsonrpc: '2.0',
-      method,
-      params
-    };
-
-    this.process.stdin.write(JSON.stringify(notification) + '\n');
-  }
-
-  async callTool(toolName: string, args: Record<string, string>): Promise<string> {
-    if (!this.isInitialized) {
-      await this.initialize();
-    }
-
-    const response = await this.sendRequest('tools/call', {
-      name: toolName,
-      arguments: args
-    });
-
-    if (response.result?.content?.[0]?.text) {
-      return response.result.content[0].text;
-    }
-
-    throw new Error('Invalid MCP response');
-  }
-
-  kill() {
-    if (this.initTimeout) {
-      clearTimeout(this.initTimeout);
-    }
-    this.pendingRequests.forEach(p => clearTimeout(p.timeout));
-    this.pendingRequests.clear();
-
-    if (this.process) {
-      this.process.kill();
-      this.process = null;
-    }
-    this.isInitialized = false;
-  }
-
-  reset() {
-    this.kill();
-    setTimeout(() => this.initialize().catch(console.error), 1000);
-  }
-}
-
-let mcpProcess: MCPProcess | null = null;
-let mcpResetTimer: NodeJS.Timeout | null = null;
-
-function getMCPProcess(): MCPProcess {
-  if (!mcpProcess) {
-    mcpProcess = new MCPProcess();
-  }
-  return mcpProcess;
-}
-
-export async function recognizeImage(imagePath: string, prompt: string = '识别图片中的文字，原文输出，不要修改。如果有段落请保留段落结构。'): Promise<string> {
-  const mcp = getMCPProcess();
-
-  for (let attempt = 1; attempt <= 5; attempt++) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const t0 = Date.now();
     try {
-      console.log(`Image recognition attempt ${attempt}/5 for ${imagePath}`);
-      const result = await mcp.callTool('understand_image', {
-        prompt,
-        image_source: imagePath
-      });
-      return result;
-    } catch (error: any) {
-      console.error(`Attempt ${attempt} failed:`, error.message);
+      const response = await axios.post(
+        VLM_URL,
+        { model: OCR_MODEL, prompt, image_url: imageUrl },
+        {
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+            'MM-API-Source': 'Minimax-Direct',
+            'Content-Type': 'application/json'
+          },
+          timeout: timeoutMs,
+          maxBodyLength: 50 * 1024 * 1024,
+          maxContentLength: 50 * 1024 * 1024
+        }
+      );
 
-      if (attempt < 5) {
-        console.log(`Retrying in 30 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 30000));
-
-        // Reset MCP process
-        mcp.reset();
-      } else {
-        throw new Error(`Image recognition failed after 5 attempts: ${error.message}`);
+      const data = response.data || {};
+      const baseResp = data.base_resp || {};
+      if (baseResp.status_code !== 0) {
+        throw new Error(
+          `VLM API error: ${baseResp.status_code}-${baseResp.status_msg || 'unknown'}`
+        );
       }
+      const content = (data.content || '').trim();
+      if (!content) {
+        throw new Error('VLM API returned empty content');
+      }
+      console.log(
+        `[VLM] OCR success attempt=${attempt} elapsed=${Date.now() - t0}ms length=${content.length}`
+      );
+      return content;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const apiMsg = err?.response?.data?.base_resp?.status_msg;
+      const detail = apiMsg || err?.message || String(err);
+      console.error(`[VLM] attempt ${attempt}/${maxRetries} failed (${status || 'no-status'}): ${detail}`);
+
+      if (attempt < maxRetries) {
+        await new Promise((r) => setTimeout(r, retryIntervalMs));
+        continue;
+      }
+      throw new Error(`Image recognition failed after ${maxRetries} attempts: ${detail}`);
     }
   }
 
-  throw new Error('Image recognition failed');
+  throw new Error('Image recognition failed (unreachable)');
 }
 
 export async function downloadImage(url: string, localPath: string): Promise<void> {
@@ -245,10 +128,5 @@ export async function downloadImage(url: string, localPath: string): Promise<voi
 }
 
 export function cleanup() {
-  if (mcpResetTimer) {
-    clearTimeout(mcpResetTimer);
-  }
-  if (mcpProcess) {
-    mcpProcess.kill();
-  }
+  // 无子进程,无资源需要释放
 }

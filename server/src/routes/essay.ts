@@ -151,6 +151,7 @@ router.get('/:batchId([0-9a-fA-F-]{36})', async (req: AuthRequest, res: Response
         tasks: batch.tasks.map(t => ({
           id: t.id,
           studentName: t.studentName,
+          nameMissing: !t.studentName,
           imageCount: t.imageCount,
           status: t.status,
           score: t.score,
@@ -190,8 +191,8 @@ router.post('/:batchId/tasks', async (req: AuthRequest, res: Response) => {
     const { studentName, imageUrls } = req.body;
     const userId = req.userId!;
 
-    if (!studentName || !Array.isArray(imageUrls) || imageUrls.length === 0) {
-      res.status(400).json({ code: 400, message: 'studentName and imageUrls are required' });
+    if (!Array.isArray(imageUrls) || imageUrls.length === 0) {
+      res.status(400).json({ code: 400, message: 'imageUrls is required' });
       return;
     }
 
@@ -342,6 +343,12 @@ router.get('/tasks/:taskId', async (req: AuthRequest, res: Response) => {
       where: { id: task.batchId, userId }
     });
 
+    // 姓名未识别时,返回候选名单(从 OCR 文本前 500 字中提取 2-4 字中文片段)
+    const { extractNameCandidates } = await import('../services/essay.service');
+    const nameCandidates = !task.studentName && task.recognizedText
+      ? extractNameCandidates(task.recognizedText, 5)
+      : [];
+
     res.json({
       code: 0,
       data: {
@@ -359,8 +366,55 @@ router.get('/tasks/:taskId', async (req: AuthRequest, res: Response) => {
         errorMessage: task.errorMessage,
         batchName: batch?.batchName,
         reviewRequirement: batch?.reviewRequirement,
+        nameCandidates,
+        nameMissing: !task.studentName,
         createdAt: task.createdAt.toISOString()
       }
+    });
+  } catch (err: any) {
+    res.status(500).json({ code: 500, message: err.message });
+  }
+});
+
+// 只更新学生姓名(不重跑批改),用于老师在前端点选候选名后快速补全
+router.patch('/tasks/:taskId/name', async (req: AuthRequest, res: Response) => {
+  try {
+    const { taskId } = req.params;
+    const { studentName } = req.body;
+    const userId = req.userId!;
+    const prisma = getPrisma();
+
+    if (typeof studentName !== 'string') {
+      res.status(400).json({ code: 400, message: 'studentName 必须是字符串' });
+      return;
+    }
+    const trimmed = studentName.trim();
+    if (trimmed.length === 0) {
+      res.status(400).json({ code: 400, message: 'studentName 不能为空' });
+      return;
+    }
+    if (trimmed.length > 20) {
+      res.status(400).json({ code: 400, message: 'studentName 太长' });
+      return;
+    }
+
+    const task = await prisma.essayTask.findFirst({
+      where: { id: taskId, userId },
+      select: { id: true }
+    });
+    if (!task) {
+      res.status(404).json({ code: 404, message: 'Task not found' });
+      return;
+    }
+
+    await prisma.essayTask.update({
+      where: { id: taskId },
+      data: { studentName: trimmed }
+    });
+
+    res.json({
+      code: 0,
+      data: { taskId, studentName: trimmed }
     });
   } catch (err: any) {
     res.status(500).json({ code: 500, message: err.message });
@@ -371,7 +425,7 @@ router.get('/tasks/:taskId', async (req: AuthRequest, res: Response) => {
 router.post('/tasks/:taskId/retry', async (req: AuthRequest, res: Response) => {
   try {
     const { taskId } = req.params;
-    const { imageUrls } = req.body;
+    const { imageUrls, studentName } = req.body;
     const userId = req.userId!;
     const prisma = getPrisma();
 
@@ -385,23 +439,20 @@ router.post('/tasks/:taskId/retry', async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    // Update task with new images if provided
+    // 合并 update:新图片 / 新姓名 / 重置状态
+    // studentName 只有非空时才覆盖(允许前端 OCR 后改名,跟原值共存)
+    const updateData: any = { status: 'pending', errorMessage: null };
     if (imageUrls && imageUrls.length > 0) {
-      await prisma.essayTask.update({
-        where: { id: taskId },
-        data: {
-          imageUrls: JSON.stringify(imageUrls),
-          imageCount: imageUrls.length,
-          status: 'pending',
-          errorMessage: null
-        }
-      });
-    } else {
-      await prisma.essayTask.update({
-        where: { id: taskId },
-        data: { status: 'pending', errorMessage: null }
-      });
+      updateData.imageUrls = JSON.stringify(imageUrls);
+      updateData.imageCount = imageUrls.length;
     }
+    if (studentName !== undefined && studentName !== '') {
+      updateData.studentName = studentName;
+    }
+    await prisma.essayTask.update({
+      where: { id: taskId },
+      data: updateData
+    });
 
     // Process task
     await processEssayTask(taskId, task.batch.reviewRequirement);

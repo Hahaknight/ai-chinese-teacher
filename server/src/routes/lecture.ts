@@ -3,10 +3,35 @@ import { getPrisma } from '../utils/db';
 import { authMiddleware, AuthRequest } from '../middlewares/auth';
 import { createMessage, extractJson } from '../utils/ai';
 import { generateLectureReviewDocx } from '../utils/docx';
+import { generateLectureReviewPdf } from '../utils/pdf';
 import { saveFileToLocal, toPublicFileUrl } from '../routes/file';
 
 const router = Router();
 router.use(authMiddleware);
+
+// 讲评课应有的 7 个核心字段(title 是从外层 lecture.title 拿,不算)
+// 缺字段时用空值补,避免后续 docx/PDF 模板渲染时报 undefined
+function parseLectureData(aiText: string): any | null {
+  let data: any;
+  try {
+    data = extractJson<any>(aiText);
+  } catch (e) {
+    return null;
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    console.warn(`[lecture] AI 返回不是对象: type=${Array.isArray(data) ? 'array' : typeof data}`);
+    return null;
+  }
+  // 缺字段补默认值,保证 detail 页和 docx/PDF 模板有数据可读
+  if (typeof data.overallSituation !== 'string') data.overallSituation = '';
+  if (!Array.isArray(data.mainStrengths)) data.mainStrengths = [];
+  if (!Array.isArray(data.commonProblems)) data.commonProblems = [];
+  if (!Array.isArray(data.typicalProblemExplanation)) data.typicalProblemExplanation = [];
+  if (!Array.isArray(data.excellentExpressions)) data.excellentExpressions = [];
+  if (!Array.isArray(data.classPractice)) data.classPractice = [];
+  if (!Array.isArray(data.afterClassSuggestions)) data.afterClassSuggestions = [];
+  return data;
+}
 
 // Generate lecture review
 router.post('/', async (req: AuthRequest, res: Response) => {
@@ -65,7 +90,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 3. 优秀表达可以做匿名化展示
 4. 课堂练习要可操作、有针对性
 5. 语言要清晰、有教学感
-6. 严格输出 JSON,不要输出 Markdown`;
+6. 严格输出 JSON,不要输出 Markdown
+7. 【关键】必须输出一个 JSON **对象** {...},**绝对不能**是数组 [...]
+   8 个字段都要齐:title / overallSituation / mainStrengths / commonProblems /
+   typicalProblemExplanation / excellentExpressions / classPractice / afterClassSuggestions
+8. 如果有信息不足,字段填空字符串或空数组,不要省略字段`;
 
     const userPrompt = `请基于以下作文批改批次结果生成讲评课方案:
 
@@ -77,7 +106,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 学生作文结果汇总:
 ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
 
-返回格式:
+【重要】必须返回下面这种 JSON 对象(用 {...} 包裹),不能是数组 [...]:
+
 {
   "title": "讲评课标题",
   "overallSituation": "整体情况概述(100-150字)",
@@ -91,19 +121,49 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
     {"exercise": "练习题", "guide": "修改引导", "answer": "参考答案"}
   ],
   "afterClassSuggestions": ["课后建议1", "课后建议2"]
-}`;
+}
+
+只输出这一个 JSON 对象,不要 Markdown 围栏,不要解释,不要 <think> 标签。`;
 
     const aiText = await createMessage({
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
-      maxTokens: 4096
+      maxTokens: 4096,
+      temperature: 0.3
     });
 
-    let lectureData;
-    try {
-      lectureData = extractJson(aiText);
-    } catch (err: any) {
-      throw new Error(`Failed to parse AI response: ${err.message}`);
+    let lectureData = parseLectureData(aiText);
+    // 校验失败 → 调 repair prompt 让 AI 自修
+    if (!lectureData) {
+      console.warn(`[lecture] 首次 AI 返回格式异常,尝试 repair`);
+      const repairText = await createMessage({
+        system: '你是 JSON 格式修复器。必须输出严格合法的 JSON 对象 {...},不能是数组。所有 8 个字段必须存在。',
+        messages: [{
+          role: 'user',
+          content: `把下面的讲评课输出整理为严格合法的 JSON 对象 {...}。
+
+要求字段(必须全部存在,缺则填空字符串或空数组):
+- title
+- overallSituation
+- mainStrengths (string[])
+- commonProblems (string[])
+- typicalProblemExplanation (object[]: {problem, reason, method})
+- excellentExpressions (string[])
+- classPractice (object[]: {exercise, guide, answer})
+- afterClassSuggestions (string[])
+
+上一次模型输出:
+${aiText}
+
+只输出这一个 JSON 对象,不要 Markdown 围栏,不要解释。`
+        }],
+        maxTokens: 4096,
+        temperature: 0.1
+      });
+      lectureData = parseLectureData(repairText);
+      if (!lectureData) {
+        throw new Error('讲评课 AI 返回格式异常,repair 仍未修复成对象');
+      }
     }
 
     // Create lecture review record
@@ -116,8 +176,9 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
       }
     });
 
-    // Generate Word document
-    let wordUrl = null;
+    // Generate Word + PDF document (PDF 失败不阻塞 docx)
+    let wordUrl: string | null = null;
+    let pdfUrl: string | null = null;
     let fileSize = 0;
     try {
       const docxBuffer = await generateLectureReviewDocx(lectureData, batch.batchName);
@@ -141,6 +202,28 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
     } catch (err) {
       console.error('Failed to generate docx:', err);
     }
+    try {
+      const pdfBuffer = await generateLectureReviewPdf(lectureData, batch.batchName);
+      const pdfSize = pdfBuffer.length;
+      pdfUrl = await saveFileToLocal(`lecture_${lecture.id}`, pdfBuffer, 'pdf');
+      await prisma.lectureReview.update({
+        where: { id: lecture.id },
+        data: { pdfUrl }
+      });
+      await prisma.generatedFile.create({
+        data: {
+          userId,
+          sourceType: 'lecture_review',
+          sourceId: lecture.id,
+          fileName: `${lecture.title}.pdf`,
+          fileType: 'pdf',
+          fileUrl: pdfUrl!,
+          fileSize: pdfSize
+        }
+      });
+    } catch (err) {
+      console.error('Failed to generate PDF:', err);
+    }
 
     res.json({
       code: 0,
@@ -149,7 +232,7 @@ ${JSON.stringify(summaryData.tasksSummary.slice(0, 10), null, 2)}
         title: lecture.title,
         content: lectureData,
         wordUrl,
-        pdfUrl: lecture.pdfUrl
+        pdfUrl
       }
     });
   } catch (err: any) {

@@ -142,10 +142,6 @@ Page({
   saveAndNavigate(isBack) {
     const { batchId, studentName, images } = this.data;
 
-    if (!studentName) {
-      wx.showToast({ title: '请输入学生姓名', icon: 'none' });
-      return;
-    }
     if (images.length === 0) {
       wx.showToast({ title: '请上传至少一张作文图片', icon: 'none' });
       return;
@@ -166,7 +162,7 @@ Page({
       request({
         url: `/essay-batches/tasks/${this.data.taskId}/retry`,
         method: 'POST',
-        data: { imageUrls: images }
+        data: { studentName, imageUrls: images }
       })
         .then(onSuccess)
         .catch(() => {});

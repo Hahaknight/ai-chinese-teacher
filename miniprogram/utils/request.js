@@ -26,7 +26,10 @@ function isLoggedIn() {
   return !!getToken();
 }
 
-function request({ url, method = 'GET', data = {}, header = {}, hideLoading = false } = {}) {
+// 通用请求 timeout(AI 批改可能跑 5 分钟,但普通 CRUD 30s 足够)
+const DEFAULT_TIMEOUT_MS = 30000;
+
+function request({ url, method = 'GET', data = {}, header = {}, hideLoading = false, timeoutMs } = {}) {
   return new Promise((resolve, reject) => {
     const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
     const token = getToken();
@@ -45,6 +48,7 @@ function request({ url, method = 'GET', data = {}, header = {}, hideLoading = fa
       method,
       data,
       header: finalHeader,
+      timeout: timeoutMs || DEFAULT_TIMEOUT_MS,
       success: (res) => {
         if (!hideLoading) wx.hideLoading();
 
@@ -69,7 +73,8 @@ function request({ url, method = 'GET', data = {}, header = {}, hideLoading = fa
       },
       fail: (err) => {
         if (!hideLoading) wx.hideLoading();
-        wx.showToast({ title: '网络错误', icon: 'none' });
+        const isTimeout = err && (err.errMsg || '').includes('timeout');
+        wx.showToast({ title: isTimeout ? '请求超时,请重试' : '网络错误', icon: 'none' });
         reject(err);
       }
     });

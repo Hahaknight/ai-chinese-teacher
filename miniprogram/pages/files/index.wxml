@@ -20,6 +20,9 @@
   </view>
 
   <view class="empty-state" wx:else>
-    <text>暂无文件</text>
+    <text wx:if="{{filterType === 'all'}}">暂无文件</text>
+    <text wx:elif="{{filterType === 'pdf'}}">暂无 PDF 文档</text>
+    <text wx:elif="{{filterType === 'docx'}}">暂无 Word 文档</text>
+    <text wx:else>暂无文件</text>
   </view>
 </view>

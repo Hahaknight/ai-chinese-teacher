@@ -137,3 +137,10 @@
 .btn-danger::after {
   border: none;
 }
+/* 姓名未识别标记 */
+.name-missing-badge {
+  color: #ff9500;
+  font-weight: bold;
+  font-size: 32rpx;
+  margin-left: 8rpx;
+}

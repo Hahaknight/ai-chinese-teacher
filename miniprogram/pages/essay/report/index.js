@@ -3,7 +3,9 @@ const { request } = require('../../../utils/request');
 Page({
   data: {
     taskId: '',
-    task: {}
+    task: {},
+    editingName: false,
+    customName: ''
   },
 
   onLoad(options) {
@@ -17,6 +19,58 @@ Page({
         this.setData({ task: res.data });
       })
       .catch(() => {});
+  },
+
+  // 点候选名 → 直接保存
+  pickCandidate(e) {
+    const name = e.currentTarget.dataset.name;
+    if (!name) return;
+    this._saveName(name);
+  },
+
+  // 切到自定义输入模式
+  startCustomName() {
+    this.setData({ editingName: true, customName: this.data.task.studentName || '' });
+  },
+
+  onCustomNameInput(e) {
+    this.setData({ customName: e.detail.value });
+  },
+
+  cancelCustomName() {
+    this.setData({ editingName: false, customName: '' });
+  },
+
+  submitCustomName() {
+    const name = (this.data.customName || '').trim();
+    if (!name) {
+      wx.showToast({ title: '姓名不能为空', icon: 'none' });
+      return;
+    }
+    this._saveName(name);
+  },
+
+  _saveName(name) {
+    wx.showLoading({ title: '保存中...' });
+    request({
+      url: `/essay-batches/tasks/${this.data.taskId}/name`,
+      method: 'PATCH',
+      data: { studentName: name }
+    })
+      .then(() => {
+        wx.hideLoading();
+        wx.showToast({ title: '已保存', icon: 'success' });
+        this.setData({
+          editingName: false,
+          customName: '',
+          'task.studentName': name,
+          'task.nameMissing': false
+        });
+      })
+      .catch((err) => {
+        wx.hideLoading();
+        wx.showToast({ title: err.message || '保存失败', icon: 'none' });
+      });
   },
 
   copyComment() {
