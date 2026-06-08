@@ -2,7 +2,7 @@ import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, Headi
 import { v4 as uuidv4 } from 'uuid';
 
 export interface EssayReportData {
-  studentName: string;
+  studentName: string | null;
   batchName: string;
   reviewRequirement: string;
   recognizedText: string;
@@ -44,7 +44,7 @@ export async function generateEssayReportDocx(data: EssayReportData): Promise<Bu
 
         // Section 1: Basic Info
         new Paragraph({ children: [new TextRun({ text: '一、基础信息', bold: true, size: 28 })], spacing: { before: 400, after: 200 } }),
-        new Paragraph({ children: [new TextRun({ text: `学生姓名：${data.studentName}`, size: 24 })] }),
+        new Paragraph({ children: [new TextRun({ text: `学生姓名：${data.studentName || '未命名'}`, size: 24 })] }),
         new Paragraph({ children: [new TextRun({ text: `批次名称：${data.batchName}`, size: 24 })] }),
         new Paragraph({ children: [new TextRun({ text: `批改要求：${data.reviewRequirement}`, size: 24 })] }),
 

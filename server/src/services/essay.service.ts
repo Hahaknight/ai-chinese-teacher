@@ -13,6 +13,7 @@ import { getPrisma } from '../utils/db';
 import { createMessage, imageFileToContent, extractJson, ChatMessage, ContentItem } from '../utils/ai';
 import { generateEssayReportDocx } from '../utils/docx';
 import { generateEssayReportPdf } from '../utils/pdf';
+import { cleanupTaskTempFiles } from '../utils/cleanup';
 import { saveFileToLocal } from '../routes/file';
 import { recognizeImage, downloadImage } from './imageRecognitionService';
 import path from 'path';
@@ -377,6 +378,9 @@ ${aiText}
 
   } catch (err: any) {
     console.error('Process essay task (direct) error:', err);
+    // 失败时立即清理 temp 里 essay_<taskId>_*.jpg(下载下来的图片不再有意义)
+    const tempDir = process.env.TEMP_DIR || path.join(process.cwd(), 'temp');
+    cleanupTaskTempFiles(tempDir, taskId);
     await markTaskFailed(taskId, err.message || '处理失败');
   }
 }
@@ -546,6 +550,8 @@ ${recognizedText}
 
   } catch (err: any) {
     console.error('Process essay task (one-step) error:', err);
+    const tempDir = process.env.TEMP_DIR || path.join(process.cwd(), 'temp');
+    cleanupTaskTempFiles(tempDir, taskId);
     await markTaskFailed(taskId, err.message || '处理失败');
   }
 }

@@ -11,7 +11,7 @@ router.use(authMiddleware);
 
 // 讲评课应有的 7 个核心字段(title 是从外层 lecture.title 拿,不算)
 // 缺字段时用空值补,避免后续 docx/PDF 模板渲染时报 undefined
-function parseLectureData(aiText: string): any | null {
+export function parseLectureData(aiText: string): any | null {
   let data: any;
   try {
     data = extractJson<any>(aiText);

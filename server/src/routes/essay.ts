@@ -305,9 +305,18 @@ router.post('/:batchId/start', async (req: AuthRequest, res: Response) => {
       data: { status: 'processing', processingCount: batch.tasks.length }
     });
 
-    // Process each task asynchronously
-    batch.tasks.forEach(async (task) => {
-      await processEssayTask(task.id, batch.reviewRequirement);
+    // 异步并发批改:Promise.allSettled 兜底,任一任务异常不会丢日志
+    // 不 await 这个 Promise,让 HTTP 响应立即返回(老师按"开始批改"后页面继续走轮询)
+    Promise.allSettled(
+      batch.tasks.map((task) => processEssayTask(task.id, batch.reviewRequirement))
+    ).then((results) => {
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.error(`[batch:${batchId}] task[${i}] id=${batch.tasks[i].id} 处理异常:`, r.reason);
+        }
+      });
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      console.log(`[batch:${batchId}] 全部任务结算: ${results.length} 个, 异常 ${failed} 个`);
     });
 
     res.json({

@@ -8,7 +8,7 @@ router.use(authMiddleware);
 
 // 解析 schema 里的 JSON 字符串字段,失败兜底返回空数组
 // (Prisma sqlite 不支持原生 JSON 数组类型,只能存字符串)
-function safeJsonArray(s: string | null | undefined): string[] {
+export function safeJsonArray(s: string | null | undefined): string[] {
   if (!s) return [];
   try {
     const parsed = JSON.parse(s);

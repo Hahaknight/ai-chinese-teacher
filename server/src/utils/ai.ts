@@ -107,6 +107,16 @@ async function callModel(
   }
 }
 
+// 检测 messages 里是否含有 image_url 内容(用于强制图像任务走 M2.7)
+// M3 在 OCR 场景会幻觉补充看不清的字(2026-06-03 实测),所有图像任务必须用 M2.7
+function hasImageContent(messages: ChatMessage[]): boolean {
+  for (const m of messages) {
+    if (typeof m.content === 'string') continue;
+    if (Array.isArray(m.content) && m.content.some(c => c.type === 'image_url')) return true;
+  }
+  return false;
+}
+
 // 发送消息,失败时按顺序 fallback:主模型 → fallback 模型
 export async function createMessage(opts: CreateMessageOptions): Promise<string> {
   if (!API_KEY) {
@@ -125,8 +135,21 @@ export async function createMessage(opts: CreateMessageOptions): Promise<string>
     ? [{ role: 'system', content: opts.system }, ...opts.messages]
     : opts.messages;
 
-  const primary = opts.model || MODEL;
-  const candidates = primary === FALLBACK_MODEL ? [primary] : [primary, FALLBACK_MODEL];
+  // 含图像的请求强制走 M2.7,不允许用 M3(幻觉问题)
+  // 即便外部传 opts.model='MiniMax-M3' 也会被覆盖,fallback 也只用 M2.7
+  const isImageRequest = hasImageContent(messages);
+  let primary: string;
+  let candidates: string[];
+  if (isImageRequest) {
+    primary = FALLBACK_MODEL;  // FALLBACK_MODEL 默认是 M2.7
+    candidates = [primary];     // 图像任务不再 fallback,M2.7 本身就是最低档
+    if (opts.model && opts.model !== FALLBACK_MODEL) {
+      console.warn(`[ai] 图像任务忽略 opts.model=${opts.model},强制使用 ${primary}(M3 OCR 幻觉)`);
+    }
+  } else {
+    primary = opts.model || MODEL;
+    candidates = primary === FALLBACK_MODEL ? [primary] : [primary, FALLBACK_MODEL];
+  }
 
   let lastError: Error | null = null;
   for (const modelName of candidates) {

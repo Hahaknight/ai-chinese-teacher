@@ -2,8 +2,10 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { initDatabase } from './utils/db';
 import { closeBrowser } from './utils/pdf';
+import { startCleanupSchedule, stopCleanupSchedule } from './utils/cleanup';
 import authRoutes from './routes/auth';
 import essayRoutes from './routes/essay';
 import sentenceRoutes from './routes/sentence';
@@ -49,9 +51,14 @@ initDatabase().then(() => {
     console.log(`Server is running on http://${HOST}:${PORT}`);
   });
 
+  // 启动文件清理调度:temp 1 天前 / uploads 7 天前孤儿
+  const TEMP_DIR = process.env.TEMP_DIR || path.join(process.cwd(), 'temp');
+  startCleanupSchedule({ tempDir: TEMP_DIR, uploadsDir: UPLOAD_DIR });
+
   // 进程退出时关 puppeteer browser,避免 chromium 孤儿进程
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received, shutting down...`);
+    stopCleanupSchedule();
     server.close(() => console.log('HTTP server closed'));
     await closeBrowser().catch(() => {});
     process.exit(0);

@@ -2,7 +2,7 @@
 // 设计原则:HTML 模板字段与 docx.ts 保持一致,老师看到的 Word 和 PDF 排版一致
 // A4 / 黑白打印友好 / 思源宋体 fallback 系统默认
 
-import puppeteer from 'puppeteer';
+import puppeteer, { Browser, Page } from 'puppeteer';
 import type { EssayReportData, LectureReviewData } from './docx';
 
 const A4_MARGIN = '20mm';
@@ -180,9 +180,9 @@ export function renderLectureReviewHtml(d: LectureReviewData, batchName: string)
 
 // 启动一个 puppeteer browser,整个进程复用(启动 chromium 约 1-2s,不能每次 PDF 都重启)
 // 单例 + lazy init,失败时回退到重建
-let _browserPromise: Promise<puppeteer.Browser> | null = null;
+let _browserPromise: Promise<Browser> | null = null;
 
-async function getBrowser(): Promise<puppeteer.Browser> {
+async function getBrowser(): Promise<Browser> {
   if (_browserPromise) return _browserPromise;
   _browserPromise = puppeteer.launch({
     headless: true,
@@ -202,10 +202,11 @@ async function getBrowser(): Promise<puppeteer.Browser> {
 
 export async function htmlToPdf(html: string): Promise<Buffer> {
   const browser = await getBrowser();
-  let page: puppeteer.Page | null = null;
+  let page: Page | null = null;
   try {
     page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+    // HTML 是自含的(无外部资源),用 domcontentloaded 即可
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 });
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,

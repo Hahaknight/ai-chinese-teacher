@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimaxi.com/v1}
+      - JWT_SECRET=${JWT_SECRET}
+      - WX_APP_ID=${WX_APP_ID:-}
+      - WX_APP_SECRET=${WX_APP_SECRET:-}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - MINIMAX_DIRECT=${MINIMAX_DIRECT:-1}
+      - JSON_MODE=${JSON_MODE:-1}
+    volumes:
+      - ./data:/app/data           # sqlite 数据库持久化
+      - ./uploads:/app/uploads      # 上传/生成文件持久化
+    restart: unless-stopped
