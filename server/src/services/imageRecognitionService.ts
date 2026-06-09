@@ -13,6 +13,7 @@
 //       (tsx watch 不自动加载 .env)
 
 import fs from 'fs';
+import path from 'path';
 import axios from 'axios';
 
 const API_KEY = process.env.MINIMAX_API_KEY || process.env.ANTHROPIC_API_KEY || '';
@@ -123,6 +124,17 @@ export async function recognizeImage(
 }
 
 export async function downloadImage(url: string, localPath: string): Promise<void> {
+  // 2026-06-09: 提取 /uploads/xxx 相对路径(无论 URL 是绝对还是相对),
+  // 命中本地文件直接读,避免走 https 自签证书下载。失败则降级走 HTTP。
+  const m = url.match(/(\/uploads\/[^?#]+)/);
+  if (m) {
+    const rel = m[1].replace(/^\//, '');
+    const localFile = path.join(process.cwd(), rel);
+    if (fs.existsSync(localFile)) {
+      fs.copyFileSync(localFile, localPath);
+      return;
+    }
+  }
   const response = await axios.get(url, { responseType: 'arraybuffer' });
   fs.writeFileSync(localPath, response.data);
 }
