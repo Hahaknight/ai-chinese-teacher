@@ -1,31 +1,3 @@
-.remote-banner {
-  background: linear-gradient(135deg, #e8f3ff 0%, #f0f8ff 100%);
-  border: 1rpx solid #b3d8ff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-}
-
-.remote-banner-title {
-  font-size: 28rpx;
-  font-weight: 600;
-  color: #0066cc;
-  margin-bottom: 8rpx;
-}
-
-.remote-banner-desc {
-  font-size: 24rpx;
-  color: #333;
-  font-family: monospace;
-  margin-bottom: 4rpx;
-  word-break: break-all;
-}
-
-.remote-banner-tip {
-  font-size: 22rpx;
-  color: #666;
-}
-
 .tools-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

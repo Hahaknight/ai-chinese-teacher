@@ -122,7 +122,30 @@ Page({
 
   retryTask(e) {
     const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/essay/add-student/index?batchId=${this.data.batchId}&taskId=${id}` });
+    const task = (this.data.tasks || []).find(t => t.id === id);
+    const studentLabel = (task && task.studentName) ? task.studentName : '该作文';
+    wx.showModal({
+      title: '重新批改',
+      content: `将用当前已上传的图片重新请求 AI 批改 ${studentLabel} 的作文,继续吗?`,
+      success: res => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: '重新批改中...', mask: true });
+        request({
+          url: `/essay-batches/tasks/${id}/retry`,
+          method: 'POST',
+          data: {}
+        })
+          .then(() => {
+            wx.hideLoading();
+            wx.showToast({ title: '已重新提交', icon: 'success' });
+            this.pollingStatus();
+          })
+          .catch(() => {
+            wx.hideLoading();
+            wx.showToast({ title: '重新批改失败', icon: 'none' });
+          });
+      }
+    });
   },
 
   deleteBatch() {
