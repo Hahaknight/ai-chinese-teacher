@@ -463,8 +463,10 @@ router.post('/tasks/:taskId/retry', async (req: AuthRequest, res: Response) => {
       data: updateData
     });
 
-    // Process task
-    await processEssayTask(taskId, task.batch.reviewRequirement);
+    // 异步执行批改(不 await,HTTP 立即返回)—— 跟 batch start 接口保持一致,
+    // 避免 OCR + 批改 1-2 分钟把 HTTP 连接卡住导致前端超时
+    processEssayTask(taskId, task.batch.reviewRequirement)
+      .catch(err => console.error(`[essay-retry:${taskId}] 处理失败:`, err));
 
     res.json({
       code: 0,
