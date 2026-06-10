@@ -19,10 +19,6 @@ const BASE_URL = localOverride.BASE_URL || 'http://127.0.0.1:3000/api';
 module.exports = {
   BASE_URL,
 
-  // 当前是否在真机(非 127.0.0.1 / localhost)环境
-  // 用于决定是否在首页展示"真机扫码"提示横幅
-  IS_REMOTE_HOST: !/^http:\/\/(127\.0\.0\.1|localhost):/.test(BASE_URL),
-
   // 批改状态文案
   BATCH_STATUS: {
     pending: '待批改',
