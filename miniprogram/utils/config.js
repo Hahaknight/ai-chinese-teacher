@@ -14,7 +14,7 @@ function readLocalOverride() {
 
 const localOverride = readLocalOverride();
 
-const BASE_URL = localOverride.BASE_URL || 'http://127.0.0.1:3000/api';
+const BASE_URL = localOverride.BASE_URL || 'https://knghtjns.cn/api';
 
 module.exports = {
   BASE_URL,
