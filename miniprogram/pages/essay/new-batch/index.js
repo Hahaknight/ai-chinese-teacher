@@ -1,8 +1,11 @@
 const { request } = require('../../../utils/request');
+const { EXAM_MODE_PROMPT, DAILY_MODE_PROMPT } = require('../../../utils/prompts');
+
+const DEFAULT_BATCH_NAME = '命题作文:中国符号';
 
 Page({
   data: {
-    batchName: '',
+    batchName: DEFAULT_BATCH_NAME,
     reviewRequirement: ''
   },
 
@@ -12,6 +15,26 @@ Page({
 
   onReviewRequirementInput(e) {
     this.setData({ reviewRequirement: e.detail.value });
+  },
+
+  // 点击"改卷模式"/"日常模式"按钮 → 弹确认 → 替换输入框内容
+  // B1 方案:已有内容时弹 modal,防止误点丢数据
+  applyPromptPreset(e) {
+    const mode = e.currentTarget.dataset.mode;
+    const preset = mode === 'exam' ? EXAM_MODE_PROMPT : DAILY_MODE_PROMPT;
+    const modeName = mode === 'exam' ? '改卷模式' : '日常模式';
+
+    const apply = () => this.setData({ reviewRequirement: preset });
+
+    if (this.data.reviewRequirement && this.data.reviewRequirement.trim().length > 0) {
+      wx.showModal({
+        title: '替换批改要求',
+        content: `当前输入框已有内容,选择"${modeName}"将覆盖现有内容,继续吗?`,
+        success: res => { if (res.confirm) apply(); }
+      });
+    } else {
+      apply();
+    }
   },
 
   createBatch() {

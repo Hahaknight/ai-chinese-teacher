@@ -29,3 +29,24 @@
 .btn-wrapper {
   margin-top: 40rpx;
 }
+
+.prompt-presets {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.prompt-preset-btn {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  background-color: #f0f4f8;
+  color: #2c5282;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.prompt-preset-btn:active {
+  background-color: #e2e8f0;
+}
