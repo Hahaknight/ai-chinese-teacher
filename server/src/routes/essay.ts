@@ -3,8 +3,13 @@ import { getPrisma } from '../utils/db';
 import { authMiddleware, AuthRequest } from '../middlewares/auth';
 import { processEssayTask } from '../services/essay.service';
 import { toPublicFileUrl } from './file';
+import { createEssayLimiter } from '../utils/concurrency';
 
 const router = Router();
+
+// 整个模块共享同一个 limiter:start 跑 X 个 + retry 跑 Y 个时,总并发不会超过 cap
+// cap 默认从 env ESSAY_MAX_CONCURRENT 读(部署在 ecosystem.config.cjs),缺省 3
+const essayLimit = createEssayLimiter();
 
 // Apply auth middleware to all routes
 router.use(authMiddleware);
@@ -307,16 +312,24 @@ router.post('/:batchId/start', async (req: AuthRequest, res: Response) => {
 
     // 异步并发批改:Promise.allSettled 兜底,任一任务异常不会丢日志
     // 不 await 这个 Promise,让 HTTP 响应立即返回(老师按"开始批改"后页面继续走轮询)
+    // 用 essayLimit 控制并发:1.7G 内存下 Puppeteer Chromium + 13 个并发 task 会触发
+    // minimax 平台 QPS 限流 / Node 内存膨胀;ESSAY_MAX_CONCURRENT=3 是经过计算的甜蜜点
     Promise.allSettled(
-      batch.tasks.map((task) => processEssayTask(task.id, batch.reviewRequirement))
+      batch.tasks.map((task) =>
+        essayLimit(() => processEssayTask(task.id, batch.reviewRequirement))
+      )
     ).then((results) => {
       results.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          console.error(`[batch:${batchId}] task[${i}] id=${batch.tasks[i].id} 处理异常:`, r.reason);
+        if (r.status === 'fulfilled') {
+          console.log(`[batch:${batchId}] 进度 ${i + 1}/${results.length} 完成`);
+        } else {
+          console.error(`[batch:${batchId}] 进度 ${i + 1}/${results.length} 异常:`, r.reason);
         }
       });
       const failed = results.filter((r) => r.status === 'rejected').length;
-      console.log(`[batch:${batchId}] 全部任务结算: ${results.length} 个, 异常 ${failed} 个`);
+      console.log(
+        `[batch:${batchId}] 全部任务结算: ${results.length} 个, 异常 ${failed} 个, 并发上限 ${process.env.ESSAY_MAX_CONCURRENT || '3'}`
+      );
     });
 
     res.json({
@@ -465,7 +478,8 @@ router.post('/tasks/:taskId/retry', async (req: AuthRequest, res: Response) => {
 
     // 异步执行批改(不 await,HTTP 立即返回)—— 跟 batch start 接口保持一致,
     // 避免 OCR + 批改 1-2 分钟把 HTTP 连接卡住导致前端超时
-    processEssayTask(taskId, task.batch.reviewRequirement)
+    // 走同一个 essayLimit:即使老师在 batch 跑的同时点 retry,总并发不会超过 cap
+    essayLimit(() => processEssayTask(taskId, task.batch.reviewRequirement))
       .catch(err => console.error(`[essay-retry:${taskId}] 处理失败:`, err));
 
     res.json({
