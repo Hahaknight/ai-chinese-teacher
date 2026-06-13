@@ -1,9 +1,22 @@
 // PDF 生成:HTML 模板 → puppeteer (chromium) → PDF Buffer
 // 设计原则:HTML 模板字段与 docx.ts 保持一致,老师看到的 Word 和 PDF 排版一致
 // A4 / 黑白打印友好 / 思源宋体 fallback 系统默认
+//
+// 2026-06-14 改造:puppeteer v22+ 是 ESM-only,本项目 tsc 输出 CJS,顶层 `import puppeteer`
+// 会被 require() 触发 ERR_REQUIRE_ESM。改用 dynamic import:运行时按需 import,避开
+// CJS require ESM 的限制;之前能跑是因为 `npm run dev` 走 tsx(ESM 模式),现在走
+// `pm2 start ecosystem.config.cjs`(node dist/app.js)必须用 dynamic import。
 
-import puppeteer, { Browser, Page } from 'puppeteer';
+import type { Browser, Page } from 'puppeteer';
 import type { EssayReportData, LectureReviewData } from './docx';
+
+// 缓存 dynamic import 结果(整个模块的 namespace)
+let _puppeteer: typeof import('puppeteer') | null = null;
+async function loadPuppeteer(): Promise<typeof import('puppeteer')> {
+  if (_puppeteer) return _puppeteer;
+  _puppeteer = await import('puppeteer');
+  return _puppeteer;
+}
 
 const A4_MARGIN = '20mm';
 
@@ -180,11 +193,13 @@ export function renderLectureReviewHtml(d: LectureReviewData, batchName: string)
 
 // 启动一个 puppeteer browser,整个进程复用(启动 chromium 约 1-2s,不能每次 PDF 都重启)
 // 单例 + lazy init,失败时回退到重建
+// 用 dynamic import 拿 puppeteer,避免 CJS require ESM 报错
 let _browserPromise: Promise<Browser> | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (_browserPromise) return _browserPromise;
-  _browserPromise = puppeteer.launch({
+  const puppeteer = await loadPuppeteer();
+  _browserPromise = puppeteer.default.launch({
     headless: true,
     args: [
       '--no-sandbox',
